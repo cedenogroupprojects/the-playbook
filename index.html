@@ -1,0 +1,1211 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f4f4f6;--w:#fff;--s2:#f7f7f9;--s3:#eeeeee;
+  --bd:#e4e4e8;--bd2:#d4d4da;
+  --tx:#111118;--tx2:#52525e;--mu:#9898a8;
+  --blue:#2550b8;--red:#dc2626;--warn:#d97706;--ok:#16a34a;
+  --r:6px;--rl:10px;--rx:14px;
+}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);min-height:100vh;font-size:13px;line-height:1.5}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:var(--bd2);border-radius:2px}
+#ls{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px;background:#f4f4f6}
+.lw{width:100%;max-width:360px}
+.ll{text-align:center;font-size:10px;letter-spacing:5px;text-transform:uppercase;color:var(--mu);margin-bottom:14px}
+.lt{text-align:center;font-size:24px;font-weight:600;color:var(--tx);margin-bottom:3px}
+.lsb{text-align:center;font-size:12px;color:var(--mu);margin-bottom:18px}
+.lbox{background:var(--w);border:1px solid var(--bd);border-radius:var(--rx);padding:22px;display:flex;flex-direction:column;gap:9px;box-shadow:0 1px 12px rgba(0,0,0,.06)}
+.rrow{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.rbtn{padding:9px;border-radius:var(--r);border:1.5px solid var(--bd2);background:var(--s2);color:var(--tx2);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer;transition:all .15s;text-align:center}
+.rbtn:hover:not(.act){background:#eeeef2;color:var(--tx)}
+.rbtn.act{background:var(--tx);border-color:var(--tx);color:#fff;font-weight:600}
+.lf{width:100%;background:var(--s2);border:1.5px solid var(--bd);border-radius:var(--r);padding:9px 12px;color:var(--tx);font-family:'DM Sans',sans-serif;font-size:13px;outline:none;transition:all .15s}
+.lf::placeholder{color:var(--mu)}
+.lf:focus{border-color:var(--tx);background:var(--w)}
+.lbtn{width:100%;padding:10px;border-radius:var(--r);border:none;background:var(--tx);color:#fff;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer}
+.lbtn:hover{background:#1a1a24}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:6px 13px;border-radius:var(--r);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer;transition:all .15s;border:none;white-space:nowrap;line-height:1}
+.btn-dk{background:var(--tx);color:#fff}.btn-dk:hover{background:#1a1a24}
+.btn-ol{background:var(--w);color:var(--tx);border:1.5px solid var(--bd2)}.btn-ol:hover{background:var(--s2)}
+.btn-gh{background:transparent;color:var(--tx2);border:1.5px solid var(--bd)}.btn-gh:hover{background:var(--s2);color:var(--tx)}
+.btn-rd{background:rgba(220,38,38,.07);color:var(--red);border:1.5px solid rgba(220,38,38,.18)}.btn-rd:hover{background:rgba(220,38,38,.13)}
+.btn-blue{background:rgba(37,80,184,.08);color:var(--blue);border:1.5px solid rgba(37,80,184,.2)}.btn-blue:hover{background:rgba(37,80,184,.14)}
+.btn-full{width:100%}.btn-xs{padding:3px 9px;font-size:11px}.btn-sm{padding:6px 12px;font-size:12px}
+.field{width:100%;background:var(--w);border:1.5px solid var(--bd);border-radius:var(--r);padding:8px 11px;color:var(--tx);font-family:'DM Sans',sans-serif;font-size:13px;outline:none;transition:border .15s}
+.field:focus{border-color:var(--tx)}
+.field option{background:var(--w);color:var(--tx)}
+.fg{margin-bottom:11px}
+.fg label{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.9px;color:var(--mu);margin-bottom:5px;font-weight:600}
+.fg input,.fg select,.fg textarea{width:100%;background:var(--w);border:1.5px solid var(--bd);border-radius:var(--r);padding:8px 11px;color:var(--tx);font-family:'DM Sans',sans-serif;font-size:13px;outline:none;transition:border .15s}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--tx)}
+.fg textarea{resize:vertical;min-height:72px;line-height:1.6}
+.fg-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+#app{display:none;min-height:100vh;flex-direction:column}
+.topbar{background:var(--w);border-bottom:1px solid var(--bd);height:48px;display:flex;align-items:center;padding:0 22px;gap:12px;position:sticky;top:0;z-index:300}
+.tlogo{font-size:13px;font-weight:600;color:var(--tx)}
+.tlogo span{font-size:9px;letter-spacing:2.5px;text-transform:uppercase;color:var(--mu);font-weight:400;margin-left:9px;vertical-align:middle}
+.tsp{flex:1}
+.uchip{background:var(--s2);border:1px solid var(--bd);border-radius:20px;padding:3px 11px;font-size:11px;color:var(--mu)}
+.nav{display:flex;background:var(--w);border-bottom:1px solid var(--bd);padding:0 22px;overflow-x:auto}
+.ntab{padding:11px 15px;border-bottom:2px solid transparent;font-size:12px;font-weight:500;color:#b0b0c0;cursor:pointer;transition:all .15s;white-space:nowrap;user-select:none}
+.ntab:hover{color:var(--tx2)}
+.ntab.active{color:var(--tx);border-bottom-color:var(--tx);font-weight:600}
+.page{padding:20px;display:none}
+.page.active{display:block}
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+.stat-card{background:var(--w);border:1px solid var(--bd);border-radius:var(--rl);padding:16px 18px}
+.stat-num{font-size:28px;font-weight:600;color:var(--tx);line-height:1;margin-bottom:5px;letter-spacing:-.5px}
+.stat-lbl{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--mu);font-weight:600}
+.dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.card{background:var(--w);border:1px solid var(--bd);border-radius:var(--rl);padding:18px}
+.card-sm{background:var(--s2);border:1px solid var(--bd);border-radius:var(--r);padding:10px 12px}
+.att-item{display:flex;align-items:flex-start;gap:10px;padding:11px 12px;border:1px solid var(--bd);border-left:2.5px solid;border-radius:var(--r);margin-bottom:8px;background:var(--w)}
+.att-item.urgent{border-left-color:var(--red)}.att-item.warn{border-left-color:var(--warn)}.att-item.info{border-left-color:var(--blue)}
+.att-body{flex:1}
+.att-title{font-size:12px;font-weight:600;color:var(--tx);line-height:1.3;margin-bottom:3px}
+.att-meta{font-size:11px;color:var(--mu)}
+.pipe-item{margin-bottom:12px}
+.pipe-row{display:flex;align-items:center;gap:7px;margin-bottom:4px}
+.pdot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.dc0{background:var(--mu)}.dc1{background:var(--warn)}.dc2{background:var(--blue)}.dc3{background:var(--ok)}.dc4{background:#7c3aed}.dc5{background:var(--red)}
+.pipe-name{font-size:12px;color:var(--tx2);flex:1}
+.pipe-ct{font-size:11px;color:var(--mu)}
+.pbar{background:var(--s3);border-radius:2px;height:3px;overflow:hidden}
+.pfill{height:100%;background:var(--tx);border-radius:2px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+@media(max-width:700px){.stat-grid{grid-template-columns:1fr 1fr}.dash-grid,.g2,.g3{grid-template-columns:1fr}}
+.sh{display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+.sh-title{font-size:16px;font-weight:600;color:var(--tx)}
+.sp{flex:1}
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--mu);font-weight:600;padding:7px 13px;text-align:left;border-bottom:1px solid var(--bd);background:var(--s2)}
+.tbl td{padding:10px 13px;border-bottom:1px solid var(--bd);vertical-align:middle}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr.cr{cursor:pointer;transition:background .1s}
+.tbl tr.cr:hover td{background:var(--s2)}
+.av{width:30px;height:30px;border-radius:50%;background:var(--s3);border:1px solid var(--bd);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--tx2);flex-shrink:0}
+.anc{display:flex;align-items:center;gap:9px}
+.an{font-size:13px;font-weight:600;color:var(--tx)}
+.asub{font-size:11px;color:var(--mu)}
+.chip{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:600;border:1px solid var(--bd);background:var(--s2);color:var(--tx2)}
+.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:600}
+.b-blue{background:#eef1ff;color:var(--blue)}.b-green{background:#ecfdf5;color:#15803d}
+.b-yellow{background:#fffbeb;color:#92400e}.b-gray{background:var(--s2);color:var(--mu)}
+.b-red{background:#fef2f2;color:var(--red)}
+.pb0{background:#fffbeb;color:#92400e}.pb1{background:#eef1ff;color:var(--blue)}
+.pb2{background:#f5f3ff;color:#7c3aed}.pb3{background:#ecfdf5;color:#15803d}
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:1000;overflow-y:auto;padding:28px 16px}
+.modal-bg.open{display:block}
+.mbox{background:var(--w);border:1px solid var(--bd);border-radius:var(--rx);padding:24px;width:100%;max-width:660px;margin:0 auto;box-shadow:0 6px 36px rgba(0,0,0,.1)}
+.mbox-sm{max-width:440px}
+.mhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.mtitle{font-size:16px;font-weight:600;color:var(--tx)}
+.msub{font-size:11px;color:var(--mu);margin-top:2px}
+.mclose{background:transparent;border:1px solid var(--bd);border-radius:var(--r);padding:3px 9px;color:var(--mu);cursor:pointer;font-size:14px;font-family:'DM Sans',sans-serif;transition:all .15s}
+.mclose:hover{border-color:var(--red);color:var(--red)}
+.task-item{display:flex;align-items:flex-start;gap:9px;padding:9px 0;border-bottom:1px solid var(--bd)}
+.task-item:last-child{border-bottom:none}
+.tcb{width:15px;height:15px;border-radius:3px;border:1.5px solid var(--bd2);background:var(--w);cursor:pointer;flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.tcb.done{background:var(--tx);border-color:var(--tx)}
+.tlbl{flex:1;font-size:12px;color:var(--tx);line-height:1.4;outline:none}
+.tlbl.done{text-decoration:line-through;color:var(--mu)}
+.tstg{font-size:10px;color:var(--mu);margin-top:1px}
+.tacts{display:flex;gap:3px;opacity:0;transition:opacity .12s}
+.task-item:hover .tacts{opacity:1}
+.ieb{background:transparent;border:1px solid var(--bd);border-radius:3px;padding:2px 7px;font-size:10px;color:var(--mu);cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .12s}
+.ieb:hover{border-color:var(--tx2);color:var(--tx)}
+.email-link-pill{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:500;background:#eef1ff;color:var(--blue);border:1px solid rgba(37,80,184,.2);cursor:pointer;white-space:nowrap;transition:all .15s;margin-top:3px}
+.email-link-pill:hover{background:rgba(37,80,184,.15)}
+.prog-sel-bar{background:var(--w);border:1px solid var(--bd);border-radius:var(--rl);padding:13px 16px;margin-bottom:16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.prog-sel-bar label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--mu);white-space:nowrap}
+.prog-sel{background:var(--w);border:1.5px solid var(--bd2);border-radius:var(--r);padding:7px 11px;color:var(--tx);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;outline:none;min-width:200px;cursor:pointer}
+.stabs{display:flex;border-bottom:1px solid var(--bd);margin-bottom:16px}
+.stab{padding:9px 16px;border-bottom:2px solid transparent;font-size:12px;font-weight:500;color:#b0b0c0;cursor:pointer;transition:all .15s;white-space:nowrap;margin-bottom:-1px}
+.stab:hover{color:var(--tx2)}
+.stab.active{color:var(--tx);border-bottom-color:var(--tx);font-weight:600}rder:1.5px solid var(--bd2);border-radius:var(--r);padding:7px 11px;color:var(--tx);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;outline:none;min-width:200px;cursor:pointer}
+.stabs{display:flex;border-bottom:1px solid var(--bd);margin-bottom:16px}
+.stab{padding:9px 16px;border-bottom:2px solid transparent;font-size:12px;font-weight:500;color:#b0b0c0;cursor:pointer;transition:all .15s;white-space:nowrap;margin-bottom:-1px}
+.stab:hover{color:var(--tx2)}
+.stab.active{color:var(--tx);border-bottom-color:var(--tx);font-weight:600}
+.drag-handle{cursor:grab;color:var(--mu);font-size:14px;line-height:1;padding:2px 4px;user-select:none;flex-shrink:0}
+.drag-handle:active{cursor:grabbing}
+.dragging{opacity:.4}
+.drag-over{background:rgba(37,80,184,.06);border-radius:var(--r)}
+.ecard{background:var(--w);border:1px solid var(--bd);border-radius:var(--rl);overflow:hidden;margin-bottom:12px}
+.ecard-head{background:var(--s2);border-bottom:1px solid var(--bd);padding:9px 14px;display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.eslbl{background:transparent;border:none;outline:none;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--mu);font-family:'DM Sans',sans-serif;min-width:100px;cursor:text}
+.esubj{flex:1;background:var(--w);border:1.5px solid var(--bd);border-radius:var(--r);padding:6px 10px;color:var(--tx);font-family:'DM Sans',sans-serif;font-size:12px;outline:none;min-width:140px}
+.ebody{width:100%;background:var(--w);border:none;outline:none;padding:12px 14px;color:var(--tx2);font-family:'DM Sans',sans-serif;font-size:12px;resize:vertical;min-height:140px;line-height:1.75}
+.sblk{background:var(--w);border:1px solid var(--bd);border-radius:var(--rl);margin-bottom:12px;overflow:hidden}
+.sblk-head{display:flex;align-items:center;gap:8px;padding:10px 16px;background:var(--s2);border-bottom:1px solid var(--bd)}
+.sblk-name{background:transparent;border:none;outline:none;font-size:13px;font-weight:600;color:var(--tx);font-family:'DM Sans',sans-serif;min-width:140px;cursor:text;flex:1}
+.sblk-body{padding:12px 16px}
+.tedit-row{display:flex;gap:7px;align-items:center;margin-bottom:6px;padding:6px 8px;border-radius:var(--r);background:var(--s2);border:1px solid var(--bd)}
+.tedit-inp{flex:1;background:var(--w);border:1px solid var(--bd);border-radius:var(--r);padding:6px 10px;color:var(--tx);font-family:'DM Sans',sans-serif;font-size:12px;outline:none}
+.task-email-link-sel{background:var(--w);border:1px solid var(--bd);border-radius:var(--r);padding:5px 8px;color:var(--tx2);font-family:'DM Sans',sans-serif;font-size:11px;outline:none;cursor:pointer;min-width:120px}
+.ni{display:flex;align-items:flex-start;gap:10px;padding:13px 14px;background:var(--w);border:1px solid var(--bd);border-left:2.5px solid;border-radius:var(--r);margin-bottom:8px}
+.ni.urgent{border-left-color:var(--red)}.ni.warn{border-left-color:var(--warn)}.ni.info{border-left-color:var(--blue)}
+.ni-body{flex:1}
+.ni-title{font-size:12px;font-weight:600;color:var(--tx)}
+.ni-meta{font-size:11px;color:var(--mu);margin-top:1px}
+.ni-actions{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.email-viewer{background:var(--s2);border:1px solid var(--bd);border-radius:var(--rl);overflow:hidden}
+.email-viewer-head{background:var(--w);border-bottom:1px solid var(--bd);padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.email-viewer-subj{font-size:13px;font-weight:600;color:var(--tx);flex:1}
+.email-viewer-body{padding:14px;font-size:12px;color:var(--tx2);white-space:pre-wrap;line-height:1.75;font-family:'DM Sans',sans-serif}
+.pay-inv{background:var(--s2);border:1px solid var(--bd);border-radius:var(--rl);padding:18px}
+.pay-hd{border-bottom:1px solid var(--bd);padding-bottom:12px;margin-bottom:12px}
+.pay-row{display:flex;justify-content:space-between;padding:6px 0;font-size:12px;border-bottom:1px solid var(--bd)}
+.pay-row:last-child{border-bottom:none}
+.pay-row span:first-child{color:var(--mu)}
+.pay-total{display:flex;justify-content:space-between;padding:10px 0 0;font-size:14px;font-weight:700}
+.divider{border:none;border-top:1px solid var(--bd);margin:14px 0}
+.flex{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.sp{flex:1}
+.ts{font-size:11px;color:var(--mu)}
+code{background:var(--s2);color:var(--tx2);padding:1px 5px;border-radius:3px;font-size:10px;border:1px solid var(--bd)}
+.empty{text-align:center;padding:32px;color:var(--mu);font-size:12px}
+.toast{position:fixed;bottom:20px;right:20px;background:var(--tx);color:#fff;padding:8px 16px;border-radius:var(--r);font-size:12px;font-weight:500;z-index:9999;opacity:0;transform:translateY(6px);transition:all .2s;pointer-events:none}
+.toast.show{opacity:1;transform:translateY(0)}
+</style>
+</head>
+<body>
+<div class="toast" id="toast"></div>
+<div id="ls">
+  <div class="lw">
+    <div class="ll">The Playbook</div>
+    <div class="lt">Welcome back</div>
+    <div class="lsb">Coaching Program Command Center</div>
+    <div class="lbox">
+      <div class="rrow">
+        <button class="rbtn act" onclick="setRole('va',this)">VA / Onboarding</button>
+        <button class="rbtn" onclick="setRole('leadership',this)">Leadership</button>
+      </div>
+      <input class="lf" id="l-email" placeholder="Email address" value="va@theplaybook.co"/>
+      <input class="lf" type="password" id="l-pass" placeholder="Password" value=""/>
+      <button class="lbtn" onclick="doLogin()">Sign in →</button>
+    </div>
+  </div>
+</div>
+<div id="app">
+  <div class="topbar">
+    <div class="tlogo">The Playbook <span id="rtop">VA</span></div>
+    <div class="tsp"></div>
+    <div class="uchip" id="uchip">user</div>
+    <button class="btn btn-gh btn-sm" onclick="doLogout()">Sign out</button>
+  </div>
+  <div class="nav">
+    <div class="ntab active" data-p="dashboard" onclick="gp('dashboard',this)">Dashboard</div>
+    <div class="ntab" data-p="agents" onclick="gp('agents',this)">Agents</div>
+    <div class="ntab" data-p="tasks" onclick="gp('tasks',this)">Task Tracker</div>
+    <div class="ntab" data-p="templates" onclick="gp('templates',this)">Templates</div>
+    <div class="ntab" data-p="payment" onclick="gp('payment',this)">Payment Requests</div>
+    <div class="ntab" data-p="checkins" onclick="gp('checkins',this)">Check-Ins</div>
+  </div>
+  <div class="page active" id="page-dashboard">
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-num" id="s-active">—</div><div class="stat-lbl">Active Agents</div></div>
+      <div class="stat-card"><div class="stat-num" id="s-pending">—</div><div class="stat-lbl">Pending Start</div></div>
+      <div class="stat-card"><div class="stat-num" id="s-tasks">—</div><div class="stat-lbl">Pending Tasks</div></div>
+      <div class="stat-card"><div class="stat-num">5</div><div class="stat-lbl">Awaiting Payment</div></div>
+    </div>
+    <div class="dash-grid">
+      <div class="card"><div class="sh"><div class="sh-title">Needs Attention</div></div><div id="dash-att"></div></div>
+      <div class="card"><div class="sh"><div class="sh-title">Stage Pipeline</div><div class="sp"></div><button class="btn btn-dk btn-sm" onclick="openModal('m-add-agent')">+ Add Agent</button></div><div id="dash-pipe"></div></div>
+    </div>
+  </div>
+  <div class="page" id="page-agents">
+    <div class="sh"><div class="sh-title">Agents</div><div class="sp"></div>
+      <select class="field" style="width:190px;margin:0" id="ag-pf" onchange="renderAgents()"><option value="all">All Programs</option></select>
+      <input class="field" style="width:170px;margin:0" id="ag-search" placeholder="Search…" oninput="renderAgents()"/>
+      <button class="btn btn-dk btn-sm" onclick="openModal('m-add-agent')">+ Add Agent</button>
+    </div>
+    <div class="card" style="padding:0;overflow:hidden">
+      <table class="tbl"><thead><tr><th>Agent</th><th>Program</th><th>Stage</th><th>Progress</th><th>VA</th><th>Start</th><th></th></tr></thead><tbody id="ag-tbody"></tbody></table>
+    </div>
+  </div>
+  <div class="page" id="page-tasks">
+    <div class="sh"><div class="sh-title">Task Tracker</div><div class="sp"></div>
+      <select class="field" style="width:180px;margin:0" id="tk-pf" onchange="renderTasks()"><option value="all">All Programs</option></select>
+      <select class="field" style="width:170px;margin:0" id="tk-af" onchange="renderTasks()"><option value="all">All Agents</option></select>
+    </div>
+    <div id="tasks-wrap"></div>
+  </div>
+  <div class="page" id="page-templates">
+    <div class="sh"><div class="sh-title">Templates</div><div class="sp"></div><button class="btn btn-ol btn-sm" onclick="openModal('m-new-prog')">+ New Program</button></div>
+    <div class="prog-sel-bar">
+      <label>Coaching Program</label>
+      <select class="prog-sel" id="tpl-prog" onchange="switchProg()"></select>
+      <div class="sp"></div>
+      <button class="btn btn-gh btn-xs" onclick="renameProgram()">Rename</button>
+      <button class="btn btn-rd btn-xs" onclick="deleteProgram()">Delete</button>
+    </div>
+    <div class="stabs">
+      <div class="stab active" onclick="switchStab('emails',this)">Email Templates</div>
+      <div class="stab" onclick="switchStab('tasks',this)">Task Stages</div>
+    </div>
+    <div id="tpl-ep"></div>
+    <div id="tpl-tp" style="display:none"></div>
+  </div>
+  <div class="page" id="page-payment">
+    <div class="sh"><div class="sh-title">Payment Requests</div></div>
+    <div class="g2">
+      <div class="card">
+        <div style="font-size:14px;font-weight:600;margin-bottom:16px">Build Invoice</div>
+        <div class="fg"><label>Agent Name</label><input class="field" id="p-name" placeholder="Full name"/></div>
+        <div class="fg"><label>Agent Email</label><input class="field" id="p-email" placeholder="email@domain.com"/></div>
+        <div class="fg"><label>Program</label><select class="field" id="p-prog"></select></div>
+        <div class="fg-row">
+          <div class="fg"><label>Rate / Tier</label>
+            <select class="field" id="p-tier" onchange="updateTier()">
+              <option value="497">Starter — $497/mo</option><option value="797">Pro — $797/mo</option>
+              <option value="1497">Elite — $1,497/mo</option><option value="custom">Custom Amount</option>
+            </select>
+          </div>
+          <div class="fg" id="p-cw" style="display:none"><label>Custom ($)</label><input class="field" id="p-custom" type="number" placeholder="0"/></div>
+        </div>
+        <div class="fg-row">
+          <div class="fg"><label>Period</label><input class="field" id="p-period" placeholder="June 2026"/></div>
+          <div class="fg"><label>Due Date</label><input class="field" id="p-due" placeholder="June 1, 2026"/></div>
+        </div>
+        <div class="fg"><label>Notes (optional)</label><textarea class="field" id="p-notes" placeholder="Any additional notes…"></textarea></div>
+        <button class="btn btn-dk btn-full" onclick="buildInv()">Generate Invoice</button>
+      </div>
+      <div>
+        <div class="card" style="margin-bottom:10px"><div style="font-size:14px;font-weight:600;margin-bottom:14px">Preview</div><div id="inv-preview"><div class="empty">Fill in the form to preview</div></div></div>
+        <div id="inv-copy" style="display:none"><button class="btn btn-ol btn-full" onclick="copyInv()">Copy as Email Text</button></div>
+      </div>
+    </div>
+  </div>
+  <div class="page" id="page-checkins">
+    <div class="sh"><div class="sh-title">Check-In Notifications</div><div class="sp"></div>
+      <select class="field" style="width:140px;margin:0" id="notif-filter" onchange="renderNotifs()">
+        <option value="all">All</option><option value="urgent">Urgent</option><option value="warn">Pending</option><option value="info">Info</option>
+      </select>
+    </div>
+    <div id="notifs-list"></div>
+  </div>
+</div>
+
+<!-- MODALS -->
+<div class="modal-bg" id="m-add-agent"><div class="mbox">
+  <div class="mhead"><div class="mtitle">Add New Agent</div><button class="mclose" onclick="closeModal('m-add-agent')">✕</button></div>
+  <div class="fg-row"><div class="fg"><label>First Name</label><input class="field" id="na-first" placeholder="First"/></div><div class="fg"><label>Last Name</label><input class="field" id="na-last" placeholder="Last"/></div></div>
+  <div class="fg-row"><div class="fg"><label>Email</label><input class="field" id="na-email" placeholder="email@domain.com"/></div><div class="fg"><label>Phone</label><input class="field" id="na-phone" placeholder="(XXX) XXX-XXXX"/></div></div>
+  <div class="fg-row"><div class="fg"><label>Coaching Program</label><select class="field" id="na-prog"></select></div><div class="fg"><label>Rate / Tier</label><select class="field" id="na-tier"><option>Starter — $497/mo</option><option>Pro — $797/mo</option><option>Elite — $1,497/mo</option><option>Custom</option></select></div></div>
+  <div class="fg-row"><div class="fg"><label>Start Date</label><input class="field" type="date" id="na-start"/></div><div class="fg"><label>Assigned VA</label><select class="field" id="na-va"><option>Unassigned</option><option>VA Team 1</option><option>VA Team 2</option></select></div></div>
+  <div class="fg"><label>Notes</label><textarea class="field" id="na-notes" placeholder="Intake notes…"></textarea></div>
+  <div class="flex" style="justify-content:flex-end;gap:7px;margin-top:4px">
+    <button class="btn btn-gh" onclick="closeModal('m-add-agent')">Cancel</button>
+    <button class="btn btn-dk" onclick="saveAgent()">Add Agent</button>
+  </div>
+</div></div>
+
+<div class="modal-bg" id="m-agent"><div class="mbox" style="max-width:720px">
+  <div class="mhead"><div class="mtitle" id="ad-title">Agent</div><button class="mclose" onclick="closeModal('m-agent')">✕</button></div>
+  <div id="ad-body"></div>
+</div></div>
+
+<div class="modal-bg" id="m-new-prog"><div class="mbox mbox-sm">
+  <div class="mhead"><div class="mtitle">New Coaching Program</div><button class="mclose" onclick="closeModal('m-new-prog')">✕</button></div>
+  <div class="fg"><label>Program Name</label><input class="field" id="np-name" placeholder="e.g. VIP Intensive…"/></div>
+  <div class="flex" style="justify-content:flex-end;gap:7px;margin-top:4px">
+    <button class="btn btn-gh" onclick="closeModal('m-new-prog')">Cancel</button>
+    <button class="btn btn-dk" onclick="createProgram()">Create</button>
+  </div>
+</div></div>
+
+<div class="modal-bg" id="m-add-email"><div class="mbox mbox-sm">
+  <div class="mhead"><div class="mtitle">Add Email Template</div><button class="mclose" onclick="closeModal('m-add-email')">✕</button></div>
+  <div class="fg"><label>Stage / Label</label><input class="field" id="ae-stage" placeholder="e.g. Week 3 Follow-Up…"/></div>
+  <div class="fg"><label>Subject Line</label><input class="field" id="ae-subj" placeholder="Email subject…"/></div>
+  <div class="fg"><label>Email Body</label><textarea class="field" id="ae-body" style="min-height:130px"></textarea></div>
+  <div class="flex" style="justify-content:flex-end;gap:7px;margin-top:4px">
+    <button class="btn btn-gh" onclick="closeModal('m-add-email')">Cancel</button>
+    <button class="btn btn-dk" onclick="saveNewEmail()">Add Template</button>
+  </div>
+</div></div>
+
+<div class="modal-bg" id="m-email-view"><div class="mbox">
+  <div class="mhead"><div><div class="mtitle" id="ev-title">Email Template</div><div class="msub" id="ev-prog">—</div></div><button class="mclose" onclick="closeModal('m-email-view')">✕</button></div>
+  <div class="email-viewer">
+    <div class="email-viewer-head"><div class="email-viewer-subj" id="ev-subj">—</div><button class="btn btn-dk btn-xs" id="ev-copy-btn" onclick="copyEmailView()">Copy Email</button></div>
+    <div class="email-viewer-body" id="ev-body">—</div>
+  </div>
+  <div class="ts" style="margin-top:10px">Replace: <code>[Agent Name]</code> <code>[Date]</code> <code>[Amount]</code> <code>[Due Date]</code></div>
+</div></div>
+
+<div class="modal-bg" id="m-schedule"><div class="mbox mbox-sm">
+  <div class="mhead"><div><div class="mtitle" id="sch-title">Schedule Call</div><div class="msub" id="sch-agent">—</div></div><button class="mclose" onclick="closeModal('m-schedule')">✕</button></div>
+  <div class="fg"><label>Agent</label><input class="field" id="sch-name" readonly/></div>
+  <div class="fg"><label>Call Type</label><select class="field" id="sch-type"><option>Kickoff Call</option><option>Week 1 Check-In</option><option>Midpoint Review</option><option>Monthly 1:1</option><option>Graduation Call</option><option>Other</option></select></div>
+  <div class="fg-row">
+    <div class="fg"><label>Date</label><input class="field" type="date" id="sch-date"/></div>
+    <div class="fg"><label>Time</label><select class="field" id="sch-time"><option>9:00 AM</option><option>9:30 AM</option><option>10:00 AM</option><option>10:30 AM</option><option>11:00 AM</option><option>12:00 PM</option><option>1:00 PM</option><option>2:00 PM</option><option>3:00 PM</option><option>4:00 PM</option><option>5:00 PM</option></select></div>
+  </div>
+  <div class="fg"><label>Notes / Agenda</label><textarea class="field" id="sch-notes" placeholder="Topics to cover…"></textarea></div>
+  <div class="flex" style="justify-content:flex-end;gap:7px;margin-top:4px">
+    <button class="btn btn-gh" onclick="closeModal('m-schedule')">Cancel</button>
+    <button class="btn btn-dk" onclick="saveCall()">Save Call</button>
+  </div>
+</div></div>
+
+<div class="modal-bg" id="m-quick-invoice"><div class="mbox mbox-sm">
+  <div class="mhead"><div><div class="mtitle">Generate Invoice</div><div class="msub" id="qi-agent">—</div></div><button class="mclose" onclick="closeModal('m-quick-invoice')">✕</button></div>
+  <div class="fg"><label>Agent</label><input class="field" id="qi-name" readonly/></div>
+  <div class="fg"><label>Program</label><input class="field" id="qi-prog" readonly/></div>
+  <div class="fg-row">
+    <div class="fg"><label>Rate</label><select class="field" id="qi-tier" onchange="updateQiTier()"><option value="497">Starter — $497/mo</option><option value="797">Pro — $797/mo</option><option value="1497">Elite — $1,497/mo</option><option value="custom">Custom</option></select></div>
+    <div class="fg" id="qi-cw" style="display:none"><label>Amount ($)</label><input class="field" id="qi-custom" type="number" placeholder="0"/></div>
+  </div>
+  <div class="fg-row">
+    <div class="fg"><label>Period</label><input class="field" id="qi-period"/></div>
+    <div class="fg"><label>Due Date</label><input class="field" id="qi-due" placeholder="June 15, 2026"/></div>
+  </div>
+  <div id="qi-preview" style="margin-top:12px"></div>
+  <div class="flex" style="justify-content:flex-end;gap:7px;margin-top:12px">
+    <button class="btn btn-gh" onclick="closeModal('m-quick-invoice')">Cancel</button>
+    <button class="btn btn-ol" onclick="buildQiPreview()">Preview</button>
+    <button class="btn btn-dk" id="qi-copy-btn" onclick="copyQiInvoice()" style="display:none">Copy Invoice</button>
+  </div>
+</div></div>
+
+<script>
+// ── SUPABASE CONFIG ────────────────────────────────────────────────────────
+const SUPABASE_URL = 'https://gagybcalydbyxkmxzwnl.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdhZ3liY2FseWRieXhrbXh6d25sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxMzQ2OTQsImV4cCI6MjA5NTcxMDY5NH0.Ify-ze_Dzpr1Xjh4gTJESpNfo3R4v2-M2L4wJNtBdEQ';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// Runtime state
+let programs = [];
+let agents = [];
+let scheduledCalls = [];
+let currentUser = null;
+let role = 'va', _tplProg = '', _tplTab = 'emails', _inv = '', _addEmailProg = '';
+let dragSrc = null, dragType = null, dragProg = null, dragSid = null, _qiInvText = '';
+
+const PBC = ['pb0','pb1','pb2','pb3'];
+const DC = ['dc0','dc1','dc2','dc3','dc4','dc5'];
+
+const ini = a => (a.first[0] + (a.last[0] || '')).toUpperCase();
+const fn = a => a.first + ' ' + a.last;
+const pidx = id => programs.findIndex(p => p.id === id);
+function pbadge(id){const i=Math.max(0,pidx(id));const p=programs[i];if(!p)return'<span class="chip">—</span>';return`<span class="badge ${PBC[i%4]}">${p.name}</span>`}
+function stageLbl(a){const p=programs.find(x=>x.id===a.prog);if(!p)return'—';const s=p.stages.find(x=>x.id===a.stage);return s?s.label:'—'}
+function agPct(a){const all=Object.values(a.tasks).flat();return all.length?Math.round(all.filter(t=>t.done).length/all.length*100):0}
+function showToast(m='Saved'){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200)}
+function copyText(text){navigator.clipboard.writeText(text).catch(()=>{})}
+
+// ── AUTH ────────────────────────────────────────────────────────────────────
+
+function setRole(r, btn) {
+  role = r;
+  document.querySelectorAll('.rbtn').forEach(b => b.classList.remove('act'));
+  btn.classList.add('act');
+}
+
+async function doLogin() {
+  const email = document.getElementById('l-email').value;
+  const password = document.getElementById('l-pass').value;
+
+  const { data, error } = await sb.auth.signInWithPassword({ email, password });
+
+  if (error) {
+    alert('Login failed: ' + error.message);
+    return;
+  }
+
+  currentUser = data.user;
+  document.getElementById('ls').style.display = 'none';
+  const app = document.getElementById('app');
+  app.style.display = 'flex';
+  app.style.flexDirection = 'column';
+  document.getElementById('uchip').textContent = email;
+
+  const isLeadership = email.includes('leadership') || email.includes('robert') || email.includes('jeffry');
+  document.getElementById('rtop').textContent = isLeadership ? 'LEADERSHIP' : 'VA';
+
+  await initApp();
+}
+
+async function doLogout() {
+  await sb.auth.signOut();
+  document.getElementById('ls').style.display = 'flex';
+  document.getElementById('app').style.display = 'none';
+  programs = [];
+  agents = [];
+  currentUser = null;
+}
+
+// Restore existing session on page load
+window.addEventListener('load', async () => {
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) {
+    currentUser = session.user;
+    const email = session.user.email;
+    document.getElementById('l-email').value = email;
+    document.getElementById('ls').style.display = 'none';
+    const app = document.getElementById('app');
+    app.style.display = 'flex';
+    app.style.flexDirection = 'column';
+    document.getElementById('uchip').textContent = email;
+    const isLeadership = email.includes('leadership') || email.includes('robert') || email.includes('jeffry');
+    document.getElementById('rtop').textContent = isLeadership ? 'LEADERSHIP' : 'VA';
+    await initApp();
+  }
+});
+
+// ── DB: PROGRAMS ────────────────────────────────────────────────────────────
+
+async function loadPrograms() {
+  const { data, error } = await sb
+    .from('programs')
+    .select('*')
+    .order('created_at', { ascending: true });
+  if (error) { console.error('Error loading programs:', error); return; }
+  programs = data.map(p => ({
+    id: p.id,
+    name: p.name,
+    emails: p.email_templates || [],
+    stages: p.task_stages || [],
+  }));
+}
+
+async function saveProgram(prog) {
+  const isNew = !programs.find(p => p.id === prog.id) || prog.id === 'temp';
+  const payload = {
+    name: prog.name,
+    email_templates: prog.emails,
+    task_stages: prog.stages,
+  };
+  if (isNew) {
+    const { data, error } = await sb.from('programs').insert(payload).select().single();
+    if (error) { console.error('Error saving program:', error); return; }
+    prog.id = data.id;
+  } else {
+    const { error } = await sb.from('programs').update(payload).eq('id', prog.id);
+    if (error) { console.error('Error updating program:', error); }
+  }
+}
+
+async function deleteProgram_db(progId) {
+  const { error } = await sb.from('programs').delete().eq('id', progId);
+  if (error) { console.error('Error deleting program:', error); }
+}
+
+// ── DB: AGENTS ──────────────────────────────────────────────────────────────
+
+async function loadAgents() {
+  const { data, error } = await sb
+    .from('agents')
+    .select('*')
+    .order('created_at', { ascending: false });
+  if (error) { console.error('Error loading agents:', error); return; }
+  agents = data.map(a => ({
+    id: a.id,
+    first: a.first_name,
+    last: a.last_name,
+    email: a.email || '',
+    phone: a.phone || '',
+    tier: a.tier || '',
+    prog: a.program_id,
+    stage: a.current_stage_id,
+    start: a.start_date || '',
+    va: a.va_assigned || 'Unassigned',
+    notes: a.notes || '',
+    tasks: a.task_progress || {},
+  }));
+}
+
+async function saveAgent_db(agent) {
+  const isNew = !agent.id || agent.id === 'temp';
+  const payload = {
+    first_name: agent.first,
+    last_name: agent.last,
+    email: agent.email,
+    phone: agent.phone,
+    tier: agent.tier,
+    program_id: agent.prog || null,
+    current_stage_id: agent.stage,
+    start_date: agent.start || null,
+    va_assigned: agent.va,
+    notes: agent.notes,
+    task_progress: agent.tasks,
+  };
+  if (isNew) {
+    const { data, error } = await sb.from('agents').insert(payload).select().single();
+    if (error) { console.error('Error saving agent:', error); return; }
+    agent.id = data.id;
+  } else {
+    const { error } = await sb.from('agents').update(payload).eq('id', agent.id);
+    if (error) { console.error('Error updating agent:', error); }
+  }
+}
+
+async function deleteAgent_db(agentId) {
+  const { error } = await sb.from('agents').delete().eq('id', agentId);
+  if (error) { console.error('Error deleting agent:', error); }
+}
+
+// ── DB: CALLS ───────────────────────────────────────────────────────────────
+
+async function saveCall_db(call) {
+  const { error } = await sb.from('scheduled_calls').insert({
+    agent_id: call.agentId,
+    call_type: call.type,
+    scheduled_date: call.date || null,
+    scheduled_time: call.time,
+    notes: call.notes,
+  });
+  if (error) { console.error('Error saving call:', error); }
+}
+
+// ── PERSIST (async, debounced) ──────────────────────────────────────────────
+
+let _persistTimer = null;
+function persist(entity, data) {
+  clearTimeout(_persistTimer);
+  _persistTimer = setTimeout(async () => {
+    if (entity === 'program' && data) await saveProgram(data);
+    if (entity === 'agent' && data) await saveAgent_db(data);
+    if (entity === 'call' && data) await saveCall_db(data);
+  }, 600);
+}
+
+// ── NAV & UI ────────────────────────────────────────────────────────────────
+
+function gp(id, tab) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  document.querySelectorAll('.ntab').forEach(t => t.classList.remove('active'));
+  tab.classList.add('active');
+  if (id === 'dashboard') renderDash();
+  if (id === 'agents') renderAgents();
+  if (id === 'tasks') renderTasks();
+  if (id === 'templates') renderTemplates();
+  if (id === 'checkins') renderNotifs();
+}
+function openModal(id){document.getElementById(id).classList.add('open')}
+function closeModal(id){document.getElementById(id).classList.remove('open')}
+
+// ── DASHBOARD ───────────────────────────────────────────────────────────────
+
+function renderDash(){
+  document.getElementById('s-active').textContent=agents.filter(a=>a.stage!=='s1').length;
+  document.getElementById('s-pending').textContent=agents.filter(a=>a.stage==='s1').length;
+  document.getElementById('s-tasks').textContent=agents.reduce((n,a)=>n+Object.values(a.tasks).flat().filter(t=>!t.done).length,0);
+  document.getElementById('dash-att').innerHTML=[
+    {type:'urgent',agentId:'',title:'Check-ins load from Supabase after setup',meta:'Configure Supabase to see live alerts',actions:[{label:'Setup →',fn:"gp('templates',document.querySelector('[data-p=templates]'))"}]},
+  ].map(n=>`<div class="att-item ${n.type}"><div class="att-body"><div class="att-title">${n.title}</div><div class="att-meta">${n.meta}</div></div><div class="ni-actions">${n.actions.map(a=>`<button class="btn btn-ol btn-xs" onclick="${a.fn}">${a.label}</button>`).join('')}</div></div>`).join('');
+  let pipeItems=[];
+  programs.forEach((p,pi)=>p.stages.forEach(s=>{
+    const c=agents.filter(a=>a.prog===p.id&&a.stage===s.id).length;
+    pipeItems.push({label:s.label,sub:p.name,count:c,ci:pi});
+  }));
+  document.getElementById('dash-pipe').innerHTML=pipeItems.length?pipeItems.map(e=>`
+    <div class="pipe-item"><div class="pipe-row"><span class="pdot ${DC[e.ci%6]}"></span><span class="pipe-name">${e.label} <span style="font-size:10px;color:var(--mu)">${e.sub}</span></span><span class="pipe-ct">${e.count} agent${e.count!==1?'s':''}</span></div>
+    <div class="pbar"><div class="pfill" style="width:${agents.length?Math.round(e.count/agents.length*100):0}%"></div></div></div>`).join(''):'<div class="empty">No programs yet — go to Templates to create one</div>';
+}
+
+function syncAll(){
+  const po=programs.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
+  const all='<option value="all">All Programs</option>';
+  ['ag-pf','tk-pf'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=all+po});
+  ['na-prog','p-prog'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=po});
+  const ao='<option value="all">All Agents</option>'+agents.map(a=>`<option value="${a.id}">${fn(a)}</option>`).join('');
+  const tk=document.getElementById('tk-af');if(tk)tk.innerHTML=ao;
+}
+
+// ── AGENTS ──────────────────────────────────────────────────────────────────
+
+function renderAgents(){
+  syncAll();
+  const q=(document.getElementById('ag-search')?.value||'').toLowerCase();
+  const pf=document.getElementById('ag-pf')?.value||'all';
+  const list=agents.filter(a=>(pf==='all'||a.prog===pf)&&(q?fn(a).toLowerCase().includes(q)||(a.email||'').toLowerCase().includes(q):true));
+  document.getElementById('ag-tbody').innerHTML=list.length?list.map(a=>{
+    const pct=agPct(a);
+    return`<tr class="cr" onclick="openAgentDetail('${a.id}')">
+      <td><div class="anc"><div class="av">${ini(a)}</div><div><div class="an">${fn(a)}</div><div class="asub">${a.email}</div></div></div></td>
+      <td>${pbadge(a.prog)}</td><td><span class="chip">${stageLbl(a)}</span></td>
+      <td style="min-width:100px"><div class="ts" style="color:var(--tx2);margin-bottom:3px">${pct}%</div><div class="pbar"><div class="pfill" style="width:${pct}%"></div></div></td>
+      <td class="ts" style="color:var(--tx2)">${a.va}</td><td class="ts" style="color:var(--tx2)">${a.start}</td>
+      <td><button class="btn btn-ol btn-xs" onclick="event.stopPropagation();openAgentDetail('${a.id}')">Open →</button></td>
+    </tr>`;
+  }).join(''):'<tr><td colspan="7" class="empty">No agents yet — click + Add Agent</td></tr>';
+}
+
+function emailLinkPill(progId,emailId,agentName){
+  if(!emailId)return'';
+  const p=programs.find(x=>x.id===progId);if(!p)return'';
+  const e=p.emails.find(x=>x.id===emailId);if(!e)return'';
+  return`<span class="email-link-pill" onclick="openEmailView('${progId}','${emailId}','${agentName||''}')">
+    <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><rect x="1" y="2" width="8" height="6" rx="1" stroke="currentColor" stroke-width="1.2"/><path d="M1 3l4 3 4-3" stroke="currentColor" stroke-width="1.2"/></svg>
+    ${e.stage} Email</span>`;
+}
+
+function openAgentDetail(id){
+  const a=agents.find(x=>x.id===id);if(!a)return;
+  const prog=programs.find(p=>p.id===a.prog);if(!prog)return;
+  document.getElementById('ad-title').textContent=fn(a);
+  const pct=agPct(a);
+  let h=`<div class="g3" style="margin-bottom:14px">
+    <div class="card-sm"><div class="ts">Program</div><div style="font-size:12px;margin-top:2px;font-weight:600">${prog.name}</div></div>
+    <div class="card-sm"><div class="ts">Rate</div><div style="font-size:12px;margin-top:2px;font-weight:500">${a.tier}</div></div>
+    <div class="card-sm"><div class="ts">VA</div><div style="font-size:12px;margin-top:2px;font-weight:500">${a.va}</div></div>
+  </div>
+  <div class="g3" style="margin-bottom:14px">
+    <div class="card-sm"><div class="ts">Email</div><div style="font-size:12px;margin-top:2px">${a.email}</div></div>
+    <div class="card-sm"><div class="ts">Phone</div><div style="font-size:12px;margin-top:2px">${a.phone}</div></div>
+    <div class="card-sm"><div class="ts">Start Date</div><div style="font-size:12px;margin-top:2px">${a.start}</div></div>
+  </div>
+  <div class="flex" style="margin-bottom:4px"><span class="ts">Progress: <strong style="color:var(--tx)">${pct}%</strong></span></div>
+  <div class="pbar" style="height:5px;margin-bottom:14px"><div class="pfill" style="width:${pct}%"></div></div>
+  <div class="flex" style="margin-bottom:5px"><span class="ts" style="font-weight:600;color:var(--tx)">Current Stage</span></div>
+  <div class="flex" style="margin-bottom:18px;gap:5px;flex-wrap:wrap">
+    ${prog.stages.map(s=>`<button class="btn btn-xs ${a.stage===s.id?'btn-dk':'btn-ol'}" onclick="setAgStage('${id}','${s.id}')">${s.label}</button>`).join('')}
+  </div>`;
+  prog.stages.forEach(s=>{
+    const tasks=a.tasks[s.id]||[];const done=tasks.filter(t=>t.done).length;
+    h+=`<div style="margin-bottom:16px">
+      <div class="flex" style="margin-bottom:7px">
+        <span style="font-size:12px;font-weight:600">${s.label}</span>
+        <span class="badge b-gray" style="margin-left:6px">${done}/${tasks.length}</span>
+        <div class="sp"></div><button class="ieb" onclick="addAgTask('${id}','${s.id}')">+ task</button>
+      </div>
+      <div style="background:var(--s2);border:1px solid var(--bd);border-radius:var(--r);padding:3px 12px">
+        ${tasks.length?tasks.map((t,i)=>`
+          <div class="task-item">
+            <div class="tcb${t.done?' done':''}" onclick="toggleAgTask('${id}','${s.id}',${i})">
+              ${t.done?'<svg width="9" height="9" viewBox="0 0 9 9"><polyline points="1,4.5 3.5,7 8,1.5" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/></svg>':''}
+            </div>
+            <div style="flex:1">
+              <div class="tlbl${t.done?' done':''}" contenteditable="true" onblur="editAgTask('${id}','${s.id}',${i},this.textContent)">${t.text}</div>
+              ${t.emailLink?emailLinkPill(a.prog,t.emailLink,fn(a)):''}
+            </div>
+            <div class="tacts"><button class="ieb" onclick="delAgTask('${id}','${s.id}',${i})">✕</button></div>
+          </div>`).join(''):'<div class="ts" style="padding:10px 0;text-align:center">No tasks yet</div>'}
+      </div>
+    </div>`;
+  });
+  h+=`<div class="divider"></div>
+    <div class="flex" style="justify-content:space-between">
+      <button class="btn btn-rd btn-sm" onclick="delAgent('${id}')">Remove Agent</button>
+      <div class="flex" style="gap:6px">
+        <button class="btn btn-ol btn-sm" onclick="openScheduleCall('${id}')">Schedule Call</button>
+        <button class="btn btn-ol btn-sm" onclick="openQuickInvoice('${id}')">Invoice</button>
+        <button class="btn btn-dk btn-sm" onclick="saveAgentAndClose('${id}')">Save & Close</button>
+      </div>
+    </div>`;
+  document.getElementById('ad-body').innerHTML=h;
+  openModal('m-agent');
+}
+
+function saveAgentAndClose(id) {
+  const a = agents.find(x => x.id === id);
+  if (a) persist('agent', a);
+  showToast('Saved');
+  closeModal('m-agent');
+}
+
+function setAgStage(id, sid) {
+  const a = agents.find(x => x.id === id);
+  if (!a) return;
+  a.stage = sid;
+  persist('agent', a);
+  openAgentDetail(id);
+  renderAgents();
+}
+
+function toggleAgTask(id, sid, i) {
+  const a = agents.find(x => x.id === id);
+  if (!a || !a.tasks[sid]) return;
+  a.tasks[sid][i].done = !a.tasks[sid][i].done;
+  persist('agent', a);
+  openAgentDetail(id);
+  renderTasks();
+}
+
+function editAgTask(id, sid, i, v) {
+  const a = agents.find(x => x.id === id);
+  if (a && a.tasks[sid] && v.trim()) {
+    a.tasks[sid][i].text = v.trim();
+    persist('agent', a);
+  }
+}
+
+function addAgTask(id, sid) {
+  const a = agents.find(x => x.id === id);
+  if (!a) return;
+  const v = prompt('New task:');
+  if (!v?.trim()) return;
+  if (!a.tasks[sid]) a.tasks[sid] = [];
+  a.tasks[sid].push({ text: v.trim(), emailLink: null, done: false });
+  persist('agent', a);
+  showToast('Task added');
+  openAgentDetail(id);
+}
+
+function delAgTask(id, sid, i) {
+  const a = agents.find(x => x.id === id);
+  if (!a || !a.tasks[sid]) return;
+  if (!confirm('Remove task?')) return;
+  a.tasks[sid].splice(i, 1);
+  persist('agent', a);
+  openAgentDetail(id);
+}
+
+async function delAgent(id) {
+  if (!confirm('Remove this agent?')) return;
+  await deleteAgent_db(id);
+  agents = agents.filter(a => a.id !== id);
+  closeModal('m-agent');
+  renderAgents();
+  renderDash();
+  showToast('Removed');
+}
+
+async function saveAgent() {
+  const f = document.getElementById('na-first').value.trim();
+  const l = document.getElementById('na-last').value.trim();
+  if (!f || !l) { alert('Enter first and last name'); return; }
+  const progId = document.getElementById('na-prog').value;
+  const prog = programs.find(p => p.id === progId);
+  const tasks = {};
+  if (prog) prog.stages.forEach(s => { tasks[s.id] = s.tasks.map(t => ({ text: t.text, emailLink: t.emailLink || null, done: false })); });
+
+  const newAgent = {
+    id: 'temp',
+    first: f, last: l,
+    email: document.getElementById('na-email').value,
+    phone: document.getElementById('na-phone').value,
+    tier: document.getElementById('na-tier').value,
+    prog: progId,
+    stage: prog?.stages[0]?.id || 's1',
+    start: document.getElementById('na-start').value || new Date().toISOString().split('T')[0],
+    va: document.getElementById('na-va').value,
+    notes: document.getElementById('na-notes').value,
+    tasks,
+  };
+
+  await saveAgent_db(newAgent); // sets newAgent.id to DB uuid
+  agents.unshift(newAgent);
+  showToast('Agent added');
+  closeModal('m-add-agent');
+  ['na-first','na-last','na-email','na-phone','na-notes'].forEach(id => document.getElementById(id).value = '');
+  renderAgents();
+  renderDash();
+}
+
+// ── TASK TRACKER ────────────────────────────────────────────────────────────
+
+function renderTasks(){
+  syncAll();
+  const pf=document.getElementById('tk-pf')?.value||'all';
+  const af=document.getElementById('tk-af')?.value||'all';
+  const list=agents.filter(a=>(pf==='all'||a.prog===pf)&&(af==='all'||a.id===af));
+  let html='';
+  list.forEach(a=>{
+    const prog=programs.find(p=>p.id===a.prog);if(!prog)return;
+    let ah='';
+    prog.stages.forEach(s=>{
+      (a.tasks[s.id]||[]).filter(t=>!t.done).forEach(t=>{
+        const ri=(a.tasks[s.id]||[]).indexOf(t);
+        ah+=`<div class="task-item"><div class="tcb" onclick="qcTask('${a.id}','${s.id}',${ri},this)"></div>
+          <div><div class="tlbl">${t.text}</div><div class="tstg">${s.label} · ${prog.name}</div>
+          ${t.emailLink?emailLinkPill(a.prog,t.emailLink,fn(a)):''}</div></div>`;
+      });
+    });
+    if(!ah)return;
+    const pc=Object.values(a.tasks).flat().filter(t=>!t.done).length;
+    html+=`<div class="card" style="margin-bottom:10px">
+      <div class="flex" style="margin-bottom:10px">
+        <div class="av">${ini(a)}</div>
+        <div><div class="an" style="font-size:13px">${fn(a)}</div><div class="asub">${prog.name}</div></div>
+        <div class="sp"></div><span class="badge b-yellow">${pc} pending</span>
+      </div>
+      <div style="background:var(--s2);border:1px solid var(--bd);border-radius:var(--r);padding:3px 12px">${ah}</div>
+    </div>`;
+  });
+  document.getElementById('tasks-wrap').innerHTML=html||'<div class="card"><div class="empty">No pending tasks for this selection.</div></div>';
+}
+
+function qcTask(id, sid, i, el) {
+  el.classList.add('done');
+  el.innerHTML = '<svg width="9" height="9" viewBox="0 0 9 9"><polyline points="1,4.5 3.5,7 8,1.5" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/></svg>';
+  const a = agents.find(x => x.id === id);
+  if (a && a.tasks[sid]) {
+    a.tasks[sid][i].done = true;
+    persist('agent', a);
+  }
+  setTimeout(() => renderTasks(), 280);
+}
+
+// ── DRAG & DROP ─────────────────────────────────────────────────────────────
+
+function initDrag(container, type, progId, stageId) {
+  container.querySelectorAll('[data-drag]').forEach(item => {
+    item.draggable = true;
+    item.addEventListener('dragstart', e => { dragSrc=item; dragType=type; dragProg=progId; dragSid=stageId; item.classList.add('dragging'); e.dataTransfer.effectAllowed='move'; });
+    item.addEventListener('dragend', () => { item.classList.remove('dragging'); container.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over')); });
+    item.addEventListener('dragover', e => { e.preventDefault(); if(item!==dragSrc) item.classList.add('drag-over'); });
+    item.addEventListener('dragleave', () => item.classList.remove('drag-over'));
+    item.addEventListener('drop', e => {
+      e.preventDefault(); item.classList.remove('drag-over');
+      if (!dragSrc || dragSrc===item || dragType!==type) return;
+      const p = programs.find(x => x.id === dragProg); if (!p) return;
+      const from = parseInt(dragSrc.dataset.drag);
+      const to = parseInt(item.dataset.drag);
+      if (type==='email') { const [itm]=p.emails.splice(from,1); p.emails.splice(to,0,itm); }
+      else if (type==='stage') { const [itm]=p.stages.splice(from,1); p.stages.splice(to,0,itm); }
+      else if (type==='task') { const s=p.stages.find(x=>x.id===dragSid); if(!s) return; const [itm]=s.tasks.splice(from,1); s.tasks.splice(to,0,itm); }
+      persist('program', p);
+      renderTplPanels();
+      showToast('Order saved');
+    });
+  });
+}
+
+// ── TEMPLATES ───────────────────────────────────────────────────────────────
+
+function renderTemplates(){
+  const sel=document.getElementById('tpl-prog');
+  sel.innerHTML=programs.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
+  if(programs.find(p=>p.id===_tplProg))sel.value=_tplProg;
+  else if(programs.length){_tplProg=programs[0].id;sel.value=_tplProg;}
+  renderTplPanels();
+}
+function switchProg(){_tplProg=document.getElementById('tpl-prog').value;renderTplPanels()}
+function switchStab(tab,el){
+  _tplTab=tab;document.querySelectorAll('.stab').forEach(t=>t.classList.remove('active'));el.classList.add('active');
+  document.getElementById('tpl-ep').style.display=tab==='emails'?'block':'none';
+  document.getElementById('tpl-tp').style.display=tab==='tasks'?'block':'none';
+}
+function renderTplPanels(){const p=programs.find(x=>x.id===_tplProg);if(!p)return;renderEP(p);renderTP(p)}
+
+function renderEP(prog){
+  const wrap=document.getElementById('tpl-ep');
+  let h=prog.emails.map((e,ei)=>`
+    <div class="ecard" data-drag="${ei}">
+      <div class="ecard-head">
+        <span class="drag-handle">⠿</span>
+        <input class="eslbl" value="${e.stage.replace(/"/g,'&quot;')}" onchange="saveEStage('${prog.id}',${ei},this.value)"/>
+        <input class="esubj" value="${e.subject.replace(/"/g,'&quot;')}" placeholder="Subject line…" oninput="saveESubj('${prog.id}',${ei},this.value)"/>
+        <button class="btn btn-ol btn-xs" onclick="copyET('${prog.id}',${ei})">Copy</button>
+        <button class="btn btn-rd btn-xs" onclick="delET('${prog.id}',${ei})">Remove</button>
+      </div>
+      <textarea class="ebody" rows="5" oninput="saveEBody('${prog.id}',${ei},this.value)">${e.body}</textarea>
+    </div>`).join('');
+  h+=`<div class="flex" style="margin-top:6px;gap:10px">
+    <button class="btn btn-ol btn-sm" onclick="openAddEmail('${prog.id}')">+ Add Email Template</button>
+    <span class="ts">Variables: <code>[Agent Name]</code> <code>[Date]</code> <code>[Due Date]</code> <code>[Month]</code> <code>[Amount]</code></span>
+  </div>`;
+  wrap.innerHTML=h;initDrag(wrap,'email',prog.id,null);
+}
+
+function saveEStage(pid,ei,v){
+  const p=programs.find(x=>x.id===pid);
+  if(p&&p.emails[ei]){p.emails[ei].stage=v.trim();persist('program',p);}
+}
+function saveESubj(pid,ei,v){
+  const p=programs.find(x=>x.id===pid);
+  if(p&&p.emails[ei]){p.emails[ei].subject=v;persist('program',p);}
+}
+function saveEBody(pid,ei,v){
+  const p=programs.find(x=>x.id===pid);
+  if(p&&p.emails[ei]){p.emails[ei].body=v;persist('program',p);}
+}
+function copyET(pid,ei){const p=programs.find(x=>x.id===pid);if(!p)return;const e=p.emails[ei];if(!e)return;copyText('Subject: '+e.subject+'\n\n'+e.body);showToast('Email copied')}
+function delET(pid,ei){
+  const p=programs.find(x=>x.id===pid);if(!p)return;
+  if(!confirm('Remove this email template?'))return;
+  p.emails.splice(ei,1);
+  persist('program',p);
+  renderTplPanels();
+  showToast('Removed');
+}
+function openAddEmail(pid){_addEmailProg=pid;['ae-stage','ae-subj'].forEach(id=>document.getElementById(id).value='');document.getElementById('ae-body').value='Hi [Agent Name],\n\n\n\n[Your Name]';openModal('m-add-email')}
+function saveNewEmail(){
+  const stage=document.getElementById('ae-stage').value.trim();if(!stage){alert('Enter a stage label');return}
+  const p=programs.find(x=>x.id===_addEmailProg);if(!p)return;
+  p.emails.push({id:'e'+Date.now(),stage,subject:document.getElementById('ae-subj').value,body:document.getElementById('ae-body').value});
+  persist('program',p);showToast('Template added');closeModal('m-add-email');renderTplPanels();
+}
+
+function renderTP(prog){
+  const wrap=document.getElementById('tpl-tp');
+  let h=prog.stages.map((s,si)=>`
+    <div class="sblk" data-drag="${si}">
+      <div class="sblk-head">
+        <span class="drag-handle">⠿</span>
+        <span class="pdot ${DC[si%6]}"></span>
+        <input class="sblk-name" value="${s.label.replace(/"/g,'&quot;')}" onchange="saveSN('${prog.id}','${s.id}',this.value)"/>
+        <div class="sp"></div>
+        <button class="btn btn-rd btn-xs" onclick="delStage('${prog.id}','${s.id}')">Remove Stage</button>
+      </div>
+      <div class="sblk-body" id="tb-${prog.id}-${s.id}">
+        ${s.tasks.map((t,ti)=>`
+          <div class="tedit-row" data-drag="${ti}">
+            <span class="drag-handle" style="font-size:12px">⠿</span>
+            <input class="tedit-inp" value="${(typeof t==='string'?t:t.text).replace(/"/g,'&quot;')}" oninput="saveST('${prog.id}','${s.id}',${ti},this.value)"/>
+            <select class="task-email-link-sel" onchange="saveTaskLink('${prog.id}','${s.id}',${ti},this.value)">
+              <option value="">No email link</option>
+              ${prog.emails.map(e=>`<option value="${e.id}" ${(t.emailLink||'')===''+e.id?'selected':''}>${e.stage}</option>`).join('')}
+            </select>
+            <button class="btn btn-rd btn-xs" onclick="delST('${prog.id}','${s.id}',${ti})">✕</button>
+          </div>`).join('')}
+        <button class="btn btn-gh btn-xs" style="margin-top:5px" onclick="addST('${prog.id}','${s.id}')">+ Add task</button>
+      </div>
+    </div>`).join('');
+  h+=`<button class="btn btn-ol btn-sm" style="margin-top:5px" onclick="addStage('${prog.id}')">+ Add Stage</button>`;
+  wrap.innerHTML=h;
+  initDrag(wrap,'stage',prog.id,null);
+  prog.stages.forEach(s=>{const tb=document.getElementById(`tb-${prog.id}-${s.id}`);if(tb)initDrag(tb,'task',prog.id,s.id)});
+}
+
+function saveSN(pid,sid,v){
+  const p=programs.find(x=>x.id===pid);if(!p)return;
+  const s=p.stages.find(x=>x.id===sid);
+  if(s&&v.trim()){s.label=v.trim();persist('program',p);}
+}
+function saveST(pid,sid,i,v){
+  const p=programs.find(x=>x.id===pid);if(!p)return;
+  const s=p.stages.find(x=>x.id===sid);if(!s)return;
+  if(typeof s.tasks[i]==='string')s.tasks[i]={text:v,emailLink:null};
+  else s.tasks[i].text=v;
+  persist('program',p);
+}
+function saveTaskLink(pid,sid,i,emailId){
+  const p=programs.find(x=>x.id===pid);if(!p)return;
+  const s=p.stages.find(x=>x.id===sid);if(!s)return;
+  if(typeof s.tasks[i]==='string')s.tasks[i]={text:s.tasks[i],emailLink:emailId||null};
+  else s.tasks[i].emailLink=emailId||null;
+  persist('program',p);showToast('Email link saved');
+}
+function addST(pid,sid){
+  const p=programs.find(x=>x.id===pid);if(!p)return;
+  const s=p.stages.find(x=>x.id===sid);if(!s)return;
+  s.tasks.push({text:'New task',emailLink:null});
+  persist('program',p);renderTplPanels();showToast('Task added');
+}
+function delST(pid,sid,i){
+  const p=programs.find(x=>x.id===pid);if(!p)return;
+  const s=p.stages.find(x=>x.id===sid);if(!s)return;
+  if(!confirm('Remove?'))return;
+  s.tasks.splice(i,1);
+  persist('program',p);renderTplPanels();
+}
+function addStage(pid){
+  const p=programs.find(x=>x.id===pid);if(!p)return;
+  const lbl=prompt('New stage name:');if(!lbl?.trim())return;
+  p.stages.push({id:'s'+Date.now(),label:lbl.trim(),tasks:[{text:'New task',emailLink:null}]});
+  persist('program',p);renderTplPanels();showToast('Stage added');
+}
+function delStage(pid,sid){
+  const p=programs.find(x=>x.id===pid);if(!p)return;
+  if(!confirm('Remove this entire stage?'))return;
+  p.stages=p.stages.filter(s=>s.id!==sid);
+  persist('program',p);renderTplPanels();showToast('Removed');
+}
+
+async function createProgram() {
+  const name = document.getElementById('np-name').value.trim();
+  if (!name) { alert('Enter a program name'); return; }
+  const newProg = {
+    id: 'temp',
+    name,
+    emails: [{ id: 'e1', stage: 'Welcome', subject: `Welcome to ${name}`, body: `Hi [Agent Name],\n\nWelcome to ${name}.\n\n[Your Name]` }],
+    stages: [{ id: 's1', label: 'Onboarding', tasks: [{ text: 'Send welcome email', emailLink: 'e1' }, { text: 'Collect intake form', emailLink: null }, { text: 'Schedule kickoff call', emailLink: null }] }],
+  };
+  await saveProgram(newProg); // sets newProg.id to DB uuid
+  programs.push(newProg);
+  _tplProg = newProg.id;
+  showToast('Program created');
+  closeModal('m-new-prog');
+  document.getElementById('np-name').value = '';
+  renderTemplates();
+  syncAll();
+}
+
+function renameProgram() {
+  const p = programs.find(x => x.id === _tplProg); if (!p) return;
+  const n = prompt('New name:', p.name); if (!n?.trim()) return;
+  p.name = n.trim();
+  persist('program', p);
+  renderTemplates();
+  showToast('Renamed');
+}
+
+async function deleteProgram() {
+  const p = programs.find(x => x.id === _tplProg); if (!p) return;
+  if (programs.length < 2) { alert("Can't delete the only program."); return; }
+  if (!confirm(`Delete "${p.name}"?`)) return;
+  await deleteProgram_db(_tplProg);
+  programs = programs.filter(x => x.id !== _tplProg);
+  _tplProg = programs[0].id;
+  renderTemplates();
+  showToast('Deleted');
+}
+
+// ── EMAIL VIEWER ────────────────────────────────────────────────────────────
+
+function openEmailView(progId,emailId,agentName){
+  const p=programs.find(x=>x.id===progId);if(!p)return;
+  const e=p.emails.find(x=>x.id===emailId);if(!e)return;
+  document.getElementById('ev-title').textContent=e.stage;
+  document.getElementById('ev-prog').textContent=p.name;
+  const subj=e.subject.replace(/\[Agent Name\]/g,agentName||'[Agent Name]');
+  const body=e.body.replace(/\[Agent Name\]/g,agentName||'[Agent Name]');
+  document.getElementById('ev-subj').textContent=subj;
+  document.getElementById('ev-body').textContent=body;
+  window._evText='Subject: '+subj+'\n\n'+body;
+  openModal('m-email-view');
+}
+function copyEmailView(){
+  copyText(window._evText||'');
+  const btn=document.getElementById('ev-copy-btn');const o=btn.textContent;btn.textContent='Copied!';
+  setTimeout(()=>btn.textContent=o,1800);showToast('Email copied to clipboard');
+}
+function openCheckInReminder(agentId,emailId,progId){const a=agents.find(x=>x.id===agentId);if(!a)return;openEmailView(progId,emailId,fn(a))}
+
+// ── CALLS ────────────────────────────────────────────────────────────────────
+
+function openScheduleCall(agentId){
+  const a=agents.find(x=>x.id===agentId);if(!a)return;
+  document.getElementById('sch-name').value=fn(a);
+  document.getElementById('sch-agent').textContent=fn(a)+' · '+stageLbl(a);
+  document.getElementById('sch-date').value=new Date().toISOString().split('T')[0];
+  document.getElementById('sch-notes').value='';
+  window._schedAgentId=agentId;openModal('m-schedule');
+}
+
+async function saveCall() {
+  const a = agents.find(x => x.id === window._schedAgentId);
+  const callObj = {
+    agentId: window._schedAgentId,
+    agentName: a ? fn(a) : '—',
+    date: document.getElementById('sch-date').value,
+    time: document.getElementById('sch-time').value,
+    type: document.getElementById('sch-type').value,
+    notes: document.getElementById('sch-notes').value,
+  };
+  scheduledCalls.push({ ...callObj, id: 'c' + Date.now() });
+  await saveCall_db(callObj);
+  showToast('Call scheduled');
+  closeModal('m-schedule');
+}
+
+// ── INVOICES ─────────────────────────────────────────────────────────────────
+
+function openQuickInvoice(agentId){
+  const a=agents.find(x=>x.id===agentId);if(!a)return;
+  const prog=programs.find(p=>p.id===a.prog);
+  document.getElementById('qi-name').value=fn(a);
+  document.getElementById('qi-prog').value=prog?prog.name:'—';
+  document.getElementById('qi-period').value=new Date().toLocaleString('default',{month:'long',year:'numeric'});
+  document.getElementById('qi-due').value='';
+  document.getElementById('qi-preview').innerHTML='';
+  document.getElementById('qi-copy-btn').style.display='none';
+  document.getElementById('qi-cw').style.display='none';
+  window._qiAgentId=agentId;openModal('m-quick-invoice');
+}
+function updateQiTier(){document.getElementById('qi-cw').style.display=document.getElementById('qi-tier').value==='custom'?'block':'none'}
+function buildQiPreview(){
+  const a=agents.find(x=>x.id===window._qiAgentId);if(!a)return;
+  const name=document.getElementById('qi-name').value;
+  const progName=document.getElementById('qi-prog').value;
+  const te=document.getElementById('qi-tier');const tv=te.value;const tl=te.options[te.selectedIndex].text;
+  const amt=tv==='custom'?(parseFloat(document.getElementById('qi-custom').value)||0):parseInt(tv);
+  const period=document.getElementById('qi-period').value||'[Month]';
+  const due=document.getElementById('qi-due').value||'[Due Date]';
+  document.getElementById('qi-preview').innerHTML=`
+    <div class="pay-inv">
+      <div class="pay-hd"><div style="font-size:14px;font-weight:700">The Playbook</div><div class="ts">Payment Request</div></div>
+      <div class="pay-row"><span>Client</span><span>${name}</span></div>
+      <div class="pay-row"><span>Program</span><span>${progName}</span></div>
+      <div class="pay-row"><span>Rate</span><span>${tl}</span></div>
+      <div class="pay-row"><span>Period</span><span>${period}</span></div>
+      <div class="pay-row"><span>Due Date</span><span>${due}</span></div>
+      <div class="pay-total"><span>Total Due</span><span>$${amt.toLocaleString()}</span></div>
+    </div>`;
+  _qiInvText=`PAYMENT REQUEST — THE PLAYBOOK\n\nClient: ${name}\nEmail: ${a.email}\nProgram: ${progName}\nRate: ${tl}\nPeriod: ${period}\nDue: ${due}\nAmount: $${amt.toLocaleString()}\n\nPayment: Zelle / Venmo / Check / [Link]\nReference: ${name} · ${period}`;
+  document.getElementById('qi-copy-btn').style.display='inline-flex';
+}
+function copyQiInvoice(){copyText(_qiInvText);const btn=document.getElementById('qi-copy-btn');const o=btn.textContent;btn.textContent='Copied!';setTimeout(()=>btn.textContent=o,1800);showToast('Invoice copied')}
+
+function updateTier(){document.getElementById('p-cw').style.display=document.getElementById('p-tier').value==='custom'?'block':'none'}
+function buildInv(){
+  const name=document.getElementById('p-name').value||'[Agent Name]';
+  const email=document.getElementById('p-email').value||'—';
+  const pe=document.getElementById('p-prog');const pname=pe.options[pe.selectedIndex]?.text||'—';
+  const te=document.getElementById('p-tier');const tv=te.value;const tl=te.options[te.selectedIndex].text;
+  const amt=tv==='custom'?(parseFloat(document.getElementById('p-custom').value)||0):parseInt(tv);
+  const period=document.getElementById('p-period').value||'[Month]';
+  const due=document.getElementById('p-due').value||'[Due Date]';
+  const notes=document.getElementById('p-notes').value;
+  document.getElementById('inv-preview').innerHTML=`
+    <div class="pay-inv">
+      <div class="pay-hd"><div style="font-size:14px;font-weight:700">The Playbook</div><div class="ts">Payment Request</div></div>
+      <div class="pay-row"><span>Client</span><span>${name}</span></div>
+      <div class="pay-row"><span>Email</span><span>${email}</span></div>
+      <div class="pay-row"><span>Program</span><span>${pname}</span></div>
+      <div class="pay-row"><span>Rate</span><span>${tl}</span></div>
+      <div class="pay-row"><span>Period</span><span>${period}</span></div>
+      <div class="pay-row"><span>Due Date</span><span>${due}</span></div>
+      ${notes?`<div class="pay-row"><span>Notes</span><span>${notes}</span></div>`:''}
+      <div class="pay-total"><span>Total Due</span><span>$${amt.toLocaleString()}</span></div>
+      <div style="background:var(--w);border:1px solid var(--bd);border-radius:var(--r);padding:10px;margin-top:10px">
+        <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">Payment Instructions</div>
+        <div class="ts">Zelle · Venmo · Check · [Payment Link]<br/>Reference: ${name} · ${period}</div>
+      </div>
+    </div>`;
+  _inv=`PAYMENT REQUEST — THE PLAYBOOK\n\nClient: ${name}\nEmail: ${email}\nProgram: ${pname}\nRate: ${tl}\nPeriod: ${period}\nDue: ${due}\nAmount: $${amt.toLocaleString()}${notes?'\nNotes: '+notes:''}\n\nPayment: Zelle / Venmo / Check / [Link]\nReference: ${name} · ${period}`;
+  document.getElementById('inv-copy').style.display='block';
+}
+function copyInv(){copyText(_inv);showToast('Invoice copied')}
+
+// ── CHECK-INS ────────────────────────────────────────────────────────────────
+
+const CHECKINS=[
+  {type:'urgent',agentId:'',progId:'',title:'No agents added yet',meta:'Add agents to see check-in alerts',actions:[{label:'Add Agent',fn:"openModal('m-add-agent')"}]},
+];
+function renderNotifs(){
+  const f=document.getElementById('notif-filter').value;
+  const list=f==='all'?CHECKINS:CHECKINS.filter(n=>n.type===f);
+  document.getElementById('notifs-list').innerHTML=list.map(n=>`
+    <div class="ni ${n.type}">
+      <div class="ni-body"><div class="ni-title">${n.title}</div><div class="ni-meta">${n.meta}</div></div>
+      <div class="ni-actions">${n.actions.map(a=>`<button class="btn btn-ol btn-xs" onclick="${a.fn}">${a.label}</button>`).join('')}</div>
+    </div>`).join('');
+}
+
+// ── INIT ─────────────────────────────────────────────────────────────────────
+
+async function initApp() {
+  showLoading(true);
+  await loadPrograms();
+  await loadAgents();
+  showLoading(false);
+  syncAll();
+  renderDash();
+  renderAgents();
+  renderTasks();
+  renderTemplates();
+  renderNotifs();
+  document.getElementById('p-period').value = new Date().toLocaleString('default', { month: 'long', year: 'numeric' });
+  document.getElementById('na-start').value = new Date().toISOString().split('T')[0];
+}
+
+function showLoading(show) {
+  console.log(show ? 'Loading data…' : 'Ready');
+}
+</script>
+</body>
+</html>
+
