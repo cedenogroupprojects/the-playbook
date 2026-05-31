@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap');
@@ -79,7 +80,85 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);min-h
 .pfill{height:100%;background:var(--tx);border-radius:2px}
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
 .g3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
-@media(max-width:700px){.stat-grid{grid-template-columns:1fr 1fr}.dash-grid,.g2,.g3{grid-template-columns:1fr}}
+@media(max-width:768px){
+  /* viewport */
+  html{-webkit-text-size-adjust:100%}
+  body{font-size:14px}
+
+  /* login */
+  #ls{padding:16px;align-items:flex-start;padding-top:40px}
+  .lw{max-width:100%}
+  .lt{font-size:22px}
+  .lbox{padding:18px}
+
+  /* topbar */
+  .topbar{padding:0 14px;gap:8px;height:52px}
+  .tlogo{font-size:14px}
+  .uchip{display:none}
+
+  /* nav */
+  .nav{padding:0 8px;-webkit-overflow-scrolling:touch}
+  .nav::-webkit-scrollbar{display:none}
+  .ntab{padding:11px 12px;font-size:12px}
+
+  /* pages */
+  .page{padding:12px}
+
+  /* stat grid: 2 cols on mobile */
+  .stat-grid{grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+  .stat-card{padding:12px 14px}
+  .stat-num{font-size:22px}
+
+  /* all 2-col grids collapse */
+  .dash-grid,.g2,.g3,.fg-row{grid-template-columns:1fr;gap:10px}
+
+  /* section headers stack */
+  .sh{gap:8px;margin-bottom:12px}
+  .sh-title{font-size:15px}
+  .sh .field{width:100%;min-width:0}
+
+  /* agent table → card list */
+  .tbl thead{display:none}
+  .tbl,.tbl tbody,.tbl tr,.tbl td{display:block;width:100%}
+  .tbl tr{background:var(--w);border:1px solid var(--bd);border-radius:var(--rl);margin-bottom:8px;padding:12px}
+  .tbl tr.cr:hover td{background:transparent}
+  .tbl td{padding:3px 0;border:none;font-size:13px}
+  .tbl td:first-child{margin-bottom:8px}
+  .tbl td:last-child{margin-top:8px}
+  .anc{gap:10px}
+  .an{font-size:14px}
+
+  /* cards */
+  .card{padding:14px;border-radius:var(--rl)}
+  .card-sm{padding:10px}
+
+  /* modals */
+  .modal-bg{padding:0;align-items:flex-end}
+  .mbox{border-radius:var(--rx) var(--rx) 0 0;padding:20px 16px;max-width:100%;margin:0;max-height:92vh;overflow-y:auto}
+  .mbox-sm{max-width:100%}
+  .fg-row{grid-template-columns:1fr}
+
+  /* prog selector bar */
+  .prog-sel-bar{flex-direction:column;align-items:flex-start;gap:8px}
+  .prog-sel{min-width:0;width:100%}
+
+  /* template task rows */
+  .tedit-row{flex-wrap:wrap}
+  .task-email-link-sel{width:100%;min-width:0}
+
+  /* buttons in sh */
+  .sh .btn{font-size:12px;padding:6px 11px}
+
+  /* payment page */
+  #page-payment .g2{grid-template-columns:1fr}
+
+  /* check-in notifications */
+  .ni{flex-direction:column;gap:8px}
+  .ni-actions{flex-wrap:wrap}
+
+  /* agent detail modal inner grids */
+  .g3{grid-template-columns:1fr 1fr}
+}
 .sh{display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap}
 .sh-title{font-size:16px;font-weight:600;color:var(--tx)}
 .sp{flex:1}
@@ -125,10 +204,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);min-h
 .prog-sel-bar{background:var(--w);border:1px solid var(--bd);border-radius:var(--rl);padding:13px 16px;margin-bottom:16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .prog-sel-bar label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--mu);white-space:nowrap}
 .prog-sel{background:var(--w);border:1.5px solid var(--bd2);border-radius:var(--r);padding:7px 11px;color:var(--tx);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;outline:none;min-width:200px;cursor:pointer}
-.stabs{display:flex;border-bottom:1px solid var(--bd);margin-bottom:16px}
-.stab{padding:9px 16px;border-bottom:2px solid transparent;font-size:12px;font-weight:500;color:#b0b0c0;cursor:pointer;transition:all .15s;white-space:nowrap;margin-bottom:-1px}
-.stab:hover{color:var(--tx2)}
-.stab.active{color:var(--tx);border-bottom-color:var(--tx);font-weight:600}rder:1.5px solid var(--bd2);border-radius:var(--r);padding:7px 11px;color:var(--tx);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;outline:none;min-width:200px;cursor:pointer}
 .stabs{display:flex;border-bottom:1px solid var(--bd);margin-bottom:16px}
 .stab{padding:9px 16px;border-bottom:2px solid transparent;font-size:12px;font-weight:500;color:#b0b0c0;cursor:pointer;transition:all .15s;white-space:nowrap;margin-bottom:-1px}
 .stab:hover{color:var(--tx2)}
@@ -250,7 +325,7 @@ code{background:var(--s2);color:var(--tx2);padding:1px 5px;border-radius:3px;fon
       <div class="stab active" onclick="switchStab('emails',this)">Email Templates</div>
       <div class="stab" onclick="switchStab('tasks',this)">Task Stages</div>
     </div>
-    <div id="tpl-ep"></div>
+  2 <div id="tpl-ep"></div>
     <div id="tpl-tp" style="display:none"></div>
   </div>
   <div class="page" id="page-payment">
@@ -377,7 +452,7 @@ code{background:var(--s2);color:var(--tx2);padding:1px 5px;border-radius:3px;fon
 </div></div>
 
 <script>
-// ── SUPABASE CONFIG ────────────────────────────────────────────────────────
+// ── SUPABASE CONFIG ───────────────────────────────────────────────────────────
 const SUPABASE_URL = 'https://gagybcalydbyxkmxzwnl.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdhZ3liY2FseWRieXhrbXh6d25sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxMzQ2OTQsImV4cCI6MjA5NTcxMDY5NH0.Ify-ze_Dzpr1Xjh4gTJESpNfo3R4v2-M2L4wJNtBdEQ';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -402,7 +477,7 @@ function agPct(a){const all=Object.values(a.tasks).flat();return all.length?Math
 function showToast(m='Saved'){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200)}
 function copyText(text){navigator.clipboard.writeText(text).catch(()=>{})}
 
-// ── AUTH ────────────────────────────────────────────────────────────────────
+// ── AUTH ──────────────────────────────────────────────────────────────────────
 
 function setRole(r, btn) {
   role = r;
@@ -461,7 +536,7 @@ window.addEventListener('load', async () => {
   }
 });
 
-// ── DB: PROGRAMS ────────────────────────────────────────────────────────────
+// ── DB: PROGRAMS ──────────────────────────────────────────────────────────────
 
 async function loadPrograms() {
   const { data, error } = await sb
@@ -499,7 +574,7 @@ async function deleteProgram_db(progId) {
   if (error) { console.error('Error deleting program:', error); }
 }
 
-// ── DB: AGENTS ──────────────────────────────────────────────────────────────
+// ── DB: AGENTS ────────────────────────────────────────────────────────────────
 
 async function loadAgents() {
   const { data, error } = await sb
@@ -553,7 +628,7 @@ async function deleteAgent_db(agentId) {
   if (error) { console.error('Error deleting agent:', error); }
 }
 
-// ── DB: CALLS ───────────────────────────────────────────────────────────────
+// ── DB: CALLS ────────────────────────────────────────────────────────────────
 
 async function saveCall_db(call) {
   const { error } = await sb.from('scheduled_calls').insert({
@@ -566,7 +641,7 @@ async function saveCall_db(call) {
   if (error) { console.error('Error saving call:', error); }
 }
 
-// ── PERSIST (async, debounced) ──────────────────────────────────────────────
+// ── PERSIST (async, debounced) ────────────────────────────────────────────────
 
 let _persistTimer = null;
 function persist(entity, data) {
@@ -578,7 +653,7 @@ function persist(entity, data) {
   }, 600);
 }
 
-// ── NAV & UI ────────────────────────────────────────────────────────────────
+// ── NAV & UI ───────────────────────────────────────────────────────────────────
 
 function gp(id, tab) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -594,7 +669,7 @@ function gp(id, tab) {
 function openModal(id){document.getElementById(id).classList.add('open')}
 function closeModal(id){document.getElementById(id).classList.remove('open')}
 
-// ── DASHBOARD ───────────────────────────────────────────────────────────────
+// ── DASHBOARD ─────────────────────────────────────────────────────────────────
 
 function renderDash(){
   document.getElementById('s-active').textContent=agents.filter(a=>a.stage!=='s1').length;
@@ -622,7 +697,7 @@ function syncAll(){
   const tk=document.getElementById('tk-af');if(tk)tk.innerHTML=ao;
 }
 
-// ── AGENTS ──────────────────────────────────────────────────────────────────
+// ── AGENTS ────────────────────────────────────────────────────────────────────
 
 function renderAgents(){
   syncAll();
@@ -803,7 +878,7 @@ async function saveAgent() {
   renderDash();
 }
 
-// ── TASK TRACKER ────────────────────────────────────────────────────────────
+// ── TASK TRACKER ──────────────────────────────────────────────────────────────
 
 function renderTasks(){
   syncAll();
@@ -847,7 +922,7 @@ function qcTask(id, sid, i, el) {
   setTimeout(() => renderTasks(), 280);
 }
 
-// ── DRAG & DROP ─────────────────────────────────────────────────────────────
+// ── DRAG & DROP ───────────────────────────────────────────────────────────────
 
 function initDrag(container, type, progId, stageId) {
   container.querySelectorAll('[data-drag]').forEach(item => {
@@ -872,7 +947,7 @@ function initDrag(container, type, progId, stageId) {
   });
 }
 
-// ── TEMPLATES ───────────────────────────────────────────────────────────────
+// ── TEMPLATES ─────────────────────────────────────────────────────────────────
 
 function renderTemplates(){
   const sel=document.getElementById('tpl-prog');
@@ -1053,7 +1128,7 @@ async function deleteProgram() {
   showToast('Deleted');
 }
 
-// ── EMAIL VIEWER ────────────────────────────────────────────────────────────
+// ── EMAIL VIEWER ──────────────────────────────────────────────────────────────
 
 function openEmailView(progId,emailId,agentName){
   const p=programs.find(x=>x.id===progId);if(!p)return;
@@ -1074,7 +1149,7 @@ function copyEmailView(){
 }
 function openCheckInReminder(agentId,emailId,progId){const a=agents.find(x=>x.id===agentId);if(!a)return;openEmailView(progId,emailId,fn(a))}
 
-// ── CALLS ────────────────────────────────────────────────────────────────────
+// ── CALLS ─────────────────────────────────────────────────────────────────────
 
 function openScheduleCall(agentId){
   const a=agents.find(x=>x.id===agentId);if(!a)return;
@@ -1101,7 +1176,7 @@ async function saveCall() {
   closeModal('m-schedule');
 }
 
-// ── INVOICES ─────────────────────────────────────────────────────────────────
+// ── INVOICES ──────────────────────────────────────────────────────────────────
 
 function openQuickInvoice(agentId){
   const a=agents.find(x=>x.id===agentId);if(!a)return;
@@ -1161,51 +1236,4 @@ function buildInv(){
       ${notes?`<div class="pay-row"><span>Notes</span><span>${notes}</span></div>`:''}
       <div class="pay-total"><span>Total Due</span><span>$${amt.toLocaleString()}</span></div>
       <div style="background:var(--w);border:1px solid var(--bd);border-radius:var(--r);padding:10px;margin-top:10px">
-        <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">Payment Instructions</div>
-        <div class="ts">Zelle · Venmo · Check · [Payment Link]<br/>Reference: ${name} · ${period}</div>
-      </div>
-    </div>`;
-  _inv=`PAYMENT REQUEST — THE PLAYBOOK\n\nClient: ${name}\nEmail: ${email}\nProgram: ${pname}\nRate: ${tl}\nPeriod: ${period}\nDue: ${due}\nAmount: $${amt.toLocaleString()}${notes?'\nNotes: '+notes:''}\n\nPayment: Zelle / Venmo / Check / [Link]\nReference: ${name} · ${period}`;
-  document.getElementById('inv-copy').style.display='block';
-}
-function copyInv(){copyText(_inv);showToast('Invoice copied')}
-
-// ── CHECK-INS ────────────────────────────────────────────────────────────────
-
-const CHECKINS=[
-  {type:'urgent',agentId:'',progId:'',title:'No agents added yet',meta:'Add agents to see check-in alerts',actions:[{label:'Add Agent',fn:"openModal('m-add-agent')"}]},
-];
-function renderNotifs(){
-  const f=document.getElementById('notif-filter').value;
-  const list=f==='all'?CHECKINS:CHECKINS.filter(n=>n.type===f);
-  document.getElementById('notifs-list').innerHTML=list.map(n=>`
-    <div class="ni ${n.type}">
-      <div class="ni-body"><div class="ni-title">${n.title}</div><div class="ni-meta">${n.meta}</div></div>
-      <div class="ni-actions">${n.actions.map(a=>`<button class="btn btn-ol btn-xs" onclick="${a.fn}">${a.label}</button>`).join('')}</div>
-    </div>`).join('');
-}
-
-// ── INIT ─────────────────────────────────────────────────────────────────────
-
-async function initApp() {
-  showLoading(true);
-  await loadPrograms();
-  await loadAgents();
-  showLoading(false);
-  syncAll();
-  renderDash();
-  renderAgents();
-  renderTasks();
-  renderTemplates();
-  renderNotifs();
-  document.getElementById('p-period').value = new Date().toLocaleString('default', { month: 'long', year: 'numeric' });
-  document.getElementById('na-start').value = new Date().toISOString().split('T')[0];
-}
-
-function showLoading(show) {
-  console.log(show ? 'Loading data…' : 'Ready');
-}
-</script>
-</body>
-</html>
-
+        <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">Payment
