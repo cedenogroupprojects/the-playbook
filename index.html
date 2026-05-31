@@ -273,6 +273,7 @@ code{background:var(--s2);color:var(--tx2);padding:1px 5px;border-radius:3px;fon
     <div class="tlogo">The Playbook <span id="rtop">VA</span></div>
     <div class="tsp"></div>
     <div class="uchip" id="uchip">user</div>
+    <button class="btn btn-gh btn-sm" onclick="openModal('m-change-pw')">Change Password</button>
     <button class="btn btn-gh btn-sm" onclick="doLogout()">Sign out</button>
   </div>
   <div class="nav">
@@ -325,7 +326,7 @@ code{background:var(--s2);color:var(--tx2);padding:1px 5px;border-radius:3px;fon
       <div class="stab active" onclick="switchStab('emails',this)">Email Templates</div>
       <div class="stab" onclick="switchStab('tasks',this)">Task Stages</div>
     </div>
-  2 <div id="tpl-ep"></div>
+    <div id="tpl-ep"></div>
     <div id="tpl-tp" style="display:none"></div>
   </div>
   <div class="page" id="page-payment">
@@ -451,6 +452,16 @@ code{background:var(--s2);color:var(--tx2);padding:1px 5px;border-radius:3px;fon
   </div>
 </div></div>
 
+<div class="modal-bg" id="m-change-pw"><div class="mbox mbox-sm">
+  <div class="mhead"><div class="mtitle">Change Password</div><button class="mclose" onclick="closeModal('m-change-pw')">✕</button></div>
+  <div class="fg"><label>New Password</label><input class="field" type="password" id="cp-new" placeholder="Min. 6 characters"/></div>
+  <div class="fg"><label>Confirm Password</label><input class="field" type="password" id="cp-confirm" placeholder="Re-enter new password"/></div>
+  <div class="flex" style="justify-content:flex-end;gap:7px;margin-top:12px">
+    <button class="btn btn-gh" onclick="closeModal('m-change-pw')">Cancel</button>
+    <button class="btn btn-dk" onclick="changePassword()">Update Password</button>
+  </div>
+</div></div>
+
 <script>
 // ── SUPABASE CONFIG ───────────────────────────────────────────────────────────
 const SUPABASE_URL = 'https://gagybcalydbyxkmxzwnl.supabase.co';
@@ -516,6 +527,19 @@ async function doLogout() {
   programs = [];
   agents = [];
   currentUser = null;
+}
+
+async function changePassword() {
+  const np = document.getElementById('cp-new').value;
+  const cp = document.getElementById('cp-confirm').value;
+  if (!np || np.length < 6) { alert('Password must be at least 6 characters.'); return; }
+  if (np !== cp) { alert('Passwords do not match.'); return; }
+  const { error } = await sb.auth.updateUser({ password: np });
+  if (error) { alert('Error: ' + error.message); return; }
+  showToast('Password updated');
+  closeModal('m-change-pw');
+  document.getElementById('cp-new').value = '';
+  document.getElementById('cp-confirm').value = '';
 }
 
 // Restore existing session on page load
@@ -628,7 +652,7 @@ async function deleteAgent_db(agentId) {
   if (error) { console.error('Error deleting agent:', error); }
 }
 
-// ── DB: CALLS ────────────────────────────────────────────────────────────────
+// ── DB: CALLS ─────────────────────────────────────────────────────────────────
 
 async function saveCall_db(call) {
   const { error } = await sb.from('scheduled_calls').insert({
@@ -653,7 +677,7 @@ function persist(entity, data) {
   }, 600);
 }
 
-// ── NAV & UI ───────────────────────────────────────────────────────────────────
+// ── NAV & UI ──────────────────────────────────────────────────────────────────
 
 function gp(id, tab) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -1219,21 +1243,4 @@ function buildInv(){
   const name=document.getElementById('p-name').value||'[Agent Name]';
   const email=document.getElementById('p-email').value||'—';
   const pe=document.getElementById('p-prog');const pname=pe.options[pe.selectedIndex]?.text||'—';
-  const te=document.getElementById('p-tier');const tv=te.value;const tl=te.options[te.selectedIndex].text;
-  const amt=tv==='custom'?(parseFloat(document.getElementById('p-custom').value)||0):parseInt(tv);
-  const period=document.getElementById('p-period').value||'[Month]';
-  const due=document.getElementById('p-due').value||'[Due Date]';
-  const notes=document.getElementById('p-notes').value;
-  document.getElementById('inv-preview').innerHTML=`
-    <div class="pay-inv">
-      <div class="pay-hd"><div style="font-size:14px;font-weight:700">The Playbook</div><div class="ts">Payment Request</div></div>
-      <div class="pay-row"><span>Client</span><span>${name}</span></div>
-      <div class="pay-row"><span>Email</span><span>${email}</span></div>
-      <div class="pay-row"><span>Program</span><span>${pname}</span></div>
-      <div class="pay-row"><span>Rate</span><span>${tl}</span></div>
-      <div class="pay-row"><span>Period</span><span>${period}</span></div>
-      <div class="pay-row"><span>Due Date</span><span>${due}</span></div>
-      ${notes?`<div class="pay-row"><span>Notes</span><span>${notes}</span></div>`:''}
-      <div class="pay-total"><span>Total Due</span><span>$${amt.toLocaleString()}</span></div>
-      <div style="background:var(--w);border:1px solid var(--bd);border-radius:var(--r);padding:10px;margin-top:10px">
-        <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">Payment
+  const te=document.getElementBy
