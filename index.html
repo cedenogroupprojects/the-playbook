@@ -1243,7 +1243,26 @@ function buildInv(){
   const name=document.getElementById('p-name').value||'[Agent Name]';
   const email=document.getElementById('p-email').value||'—';
   const pe=document.getElementById('p-prog');const pname=pe.options[pe.selectedIndex]?.text||'—';
-  const te=document.getElementBy
+  const te=document.getElementById('p-tier');const tv=te.value;const tl=te.options[te.selectedIndex].text;
+  const amt=tv==='custom'?(parseFloat(document.getElementById('p-custom').value)||0):parseInt(tv);
+  const period=document.getElementById('p-period').value||'[Month]';
+  const due=document.getElementById('p-due').value||'[Due Date]';
+  const notes=document.getElementById('p-notes').value;
+  document.getElementById('inv-preview').innerHTML=
+    '<div class="pay-inv">'+
+    '<div class="pay-hd"><div style="font-size:14px;font-weight:700">The Playbook</div><div class="ts">Payment Request</div></div>'+
+    '<div class="pay-row"><span>Agent</span><span>'+name+'</span></div>'+
+    '<div class="pay-row"><span>Program</span><span>'+pname+'</span></div>'+
+    '<div class="pay-row"><span>Rate</span><span>'+tl+'</span></div>'+
+    '<div class="pay-row"><span>Period</span><span>'+period+'</span></div>'+
+    '<div class="pay-row"><span>Due Date</span><span>'+due+'</span></div>'+
+    (notes?'<div class="pay-row"><span>Notes</span><span>'+notes+'</span></div>':'')+
+    '<div class="pay-total"><span>Total Due</span><span>$'+amt.toLocaleString()+'</span></div>'+
+    '</div>';
+  _invText='PAYMENT REQUEST \u2014 THE PLAYBOOK\n\nAgent: '+name+'\nEmail: '+email+'\nProgram: '+pname+'\nRate: '+tl+'\nPeriod: '+period+'\nDue: '+due+'\nAmount: $'+amt.toLocaleString()+'\n\nPayment: Zelle / Venmo / Check / [Link]\nReference: '+name+' \u00b7 '+period;
+  document.getElementById('inv-copy').style.display='block';
+}
+function copyInv(){copyText(_invText);const btn=document.querySelector('#inv-copy button');const o=btn.textContent;btn.textContent='Copied!';setTimeout(()=>btn.textContent=o,1800);showToast('Invoice copied')}
 
 </script>
 </body>
