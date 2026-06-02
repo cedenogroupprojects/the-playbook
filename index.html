@@ -1316,38 +1316,21 @@ async function renderSettingsAsync(){
 function renderPipelineStagesUI(){
   const wrap=document.getElementById('s-pipeline-wrap');
   if(!wrap)return;
-  wrap.innerHTML=pipelineStages.map((s,i)=>`<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--bd)">
-    <span style="font-size:13px;font-weight:500;flex:1">${s.label}</span>
-    <button class="btn btn-ol btn-xs" onclick="editPipelineStage('${s.id}','${s.label}')">Rename</button>
-    ${pipelineStages.length>1?'<button class="btn btn-rd btn-xs" onclick="delPipelineStage(''+s.id+'')">Remove</button>':''}
-  </div>`).join('')+`<div style="margin-top:10px;display:flex;gap:8px">
-    <input class="field" id="s-new-stage" placeholder="New stage name…" style="flex:1">
-    <button class="btn btn-dk btn-sm" onclick="addPipelineStage()">+ Add</button>
-  </div>`;
+  let h='';
+  pipelineStages.forEach((s,i)=>{
+    h+='<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--bd)">'
+      +'<span style="font-size:13px;font-weight:500;flex:1">'+s.label+'</span>'
+      +'<button class="btn btn-ol btn-xs" onclick="editPipelineStage(\''+s.id+'\',\''+s.label+'\')">Rename</button>'
+      +(pipelineStages.length>1?'<button class="btn btn-rd btn-xs" onclick="delPipelineStage(\''+s.id+'\')">Remove</button>':'')
+      +'</div>';
+  });
+  h+='<div style="margin-top:10px;display:flex;gap:8px">'
+    +'<input class="field" id="s-new-stage" placeholder="New stage name\u2026" style="flex:1">'
+    +'<button class="btn btn-dk btn-sm" onclick="addPipelineStage()">+ Add</button>'
+    +'</div>';
+  wrap.innerHTML=h;
 }
 
-async function addPipelineStage(){
-  const name=document.getElementById('s-new-stage')?.value?.trim();
-  if(!name){alert('Enter a stage name');return;}
-  const maxOrder=pipelineStages.reduce((m,s)=>Math.max(m,s.sort_order),0);
-  const{data}=await sb.from('pipeline_stages').insert({label:name,color:'blue',sort_order:maxOrder+1}).select().single();
-  if(data){pipelineStages.push(data);renderPipelineStagesUI();document.getElementById('s-new-stage').value='';showToast('Stage added');}
-}
-
-async function editPipelineStage(id,current){
-  const name=prompt('Rename stage:',current);
-  if(!name||name===current)return;
-  await sb.from('pipeline_stages').update({label:name}).eq('id',id);
-  const s=pipelineStages.find(x=>x.id===id);if(s)s.label=name;
-  renderPipelineStagesUI();showToast('Stage renamed');
-}
-
-async function delPipelineStage(id){
-  if(!confirm('Remove this stage? Agents currently in this stage will show no stage.'))return;
-  await sb.from('pipeline_stages').delete().eq('id',id);
-  pipelineStages=pipelineStages.filter(x=>x.id!==id);
-  renderPipelineStagesUI();showToast('Stage removed');
-}
 function renderSettingsUsers(){
   const tbody=document.getElementById('su-tbody');
   if(!tbody)return;
