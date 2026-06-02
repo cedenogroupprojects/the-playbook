@@ -300,6 +300,8 @@ code{background:var(--s2);color:var(--tx2);padding:1px 5px;border-radius:3px;fon
     <div class="sh"><div class="sh-title">Agents</div><div class="sp"></div>
       <select class="field" style="width:190px;margin:0" id="ag-pf" onchange="renderAgents()"><option value="all">All Programs</option></select>
       <input class="field" style="width:170px;margin:0" id="ag-search" placeholder="Search…" oninput="renderAgents()"/>
+      <select class="field" style="width:155px;margin:0" id="ag-sf" onchange="renderAgents()"><option value="all">All Stages</option></select>
+      <select class="field" style="width:150px;margin:0" id="ag-progress-f" onchange="renderAgents()"><option value="all">All Progress</option><option value="not_started">Not started (0%)</option><option value="in_progress">In progress</option><option value="done">Complete</option></select>
       <button class="btn btn-dk btn-sm" onclick="openModal('m-add-agent')">+ Add Agent</button>
     </div>
     <div class="card" style="padding:0;overflow:hidden">
@@ -562,6 +564,12 @@ window.addEventListener('load', async () => {
 
 // ── DB: PROGRAMS ──────────────────────────────────────────────────────────────
 
+async function initApp() {
+  await loadPrograms();
+  await loadAgents();
+  syncAll();
+}
+
 async function loadPrograms() {
   const { data, error } = await sb
     .from('programs')
@@ -719,7 +727,8 @@ function syncAll(){
   ['na-prog','p-prog'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=po});
   const ao='<option value="all">All Agents</option>'+agents.map(a=>`<option value="${a.id}">${fn(a)}</option>`).join('');
   const tk=document.getElementById('tk-af');if(tk)tk.innerHTML=ao;
-}
+
+  const agSf=document.getElementById('ag-sf');if(agSf){const pfv=document.getElementById('ag-pf')?.value||'all';const sprog=pfv==='all'?null:programs.find(p=>p.id===pfv);const sNames=sprog?sprog.stages.map(s=>s.label):[...new Set(programs.flatMap(p=>p.stages.map(s=>s.label)))];const cur=agSf.value;agSf.innerHTML='<option value="all">All Stages</option>'+sNames.map(l=>'<option value="'+l+'">'+l+'</option>').join('');if([...agSf.options].some(o=>o.value===cur))agSf.value=cur;}}
 
 // ── AGENTS ────────────────────────────────────────────────────────────────────
 
@@ -727,7 +736,9 @@ function renderAgents(){
   syncAll();
   const q=(document.getElementById('ag-search')?.value||'').toLowerCase();
   const pf=document.getElementById('ag-pf')?.value||'all';
-  const list=agents.filter(a=>(pf==='all'||a.prog===pf)&&(q?fn(a).toLowerCase().includes(q)||(a.email||'').toLowerCase().includes(q):true));
+  const sf=document.getElementById('ag-sf')?.value||'all';
+  const pgf=document.getElementById('ag-progress-f')?.value||'all';
+  const list=agents.filter(a=>(pf==='all'||a.prog===pf)&&(q?fn(a).toLowerCase().includes(q)||(a.email||'').toLowerCase().includes(q):true)&&(sf==='all'||stageLbl(a)===sf)&&(pgf==='all'||(pgf==='not_started'&&agPct(a)===0)||(pgf==='in_progress'&&agPct(a)>0&&agPct(a)<100)||(pgf==='done'&&agPct(a)===100)));
   document.getElementById('ag-tbody').innerHTML=list.length?list.map(a=>{
     const pct=agPct(a);
     return`<tr class="cr" onclick="openAgentDetail('${a.id}')">
