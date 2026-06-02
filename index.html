@@ -371,7 +371,29 @@ code{background:var(--s2);color:var(--tx2);padding:1px 5px;border-radius:3px;fon
       </select>
     </div>
     <div id="notifs-list"></div>
-  </div>
+  <
+  <div class="page" id="page-settings">
+    <div class="sh"><div class="sh-title">Settings</div></div>
+    <div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap">
+      <div style="flex:1;min-width:240px;background:var(--w);border:1px solid var(--bd);border-radius:var(--rl);padding:18px">
+        <div style="font-weight:600;font-size:15px;margin-bottom:14px">My Account</div>
+        <div style="margin-bottom:10px">
+          <label class="lbl">Display Name</label>
+          <input class="field" id="s-display-name" placeholder="Your name" style="margin-top:6px">
+        </div>
+        <button class="btn btn-ol btn-sm" onclick="saveDisplayName()" style="margin-bottom:14px">Save Name</button>
+        <div><button class="btn btn-ol btn-sm" onclick="openModal('m-change-pw')">Change Password</button></div>
+      </div>
+      <div class="ldr-only" style="flex:2;min-width:300px;background:var(--w);border:1px solid var(--bd);border-radius:var(--rl);padding:18px">
+        <div class="sh" style="margin-bottom:10px"><div style="font-weight:600;font-size:15px">User Management</div></div>
+        <div style="font-size:12px;color:var(--tx2);margin-bottom:14px">To add a new user, invite them via the Supabase dashboard. Once they sign in, their role can be set here.</div>
+        <table class="tbl">
+          <thead><tr><th>Name</th><th>Email</th><th>Role</th><th></th></tr></thead>
+          <tbody id="su-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>/div>
 </div>
 
 <!-- MODALS -->
@@ -465,29 +487,7 @@ code{background:var(--s2);color:var(--tx2);padding:1px 5px;border-radius:3px;fon
     <button class="btn btn-gh" onclick="closeModal('m-change-pw')">Cancel</button>
     <button class="btn btn-dk" onclick="changePassword()">Update Password</button>
   </div>
-
-  <div class="page" id="page-settings">
-    <div class="sh"><div class="sh-title">Settings</div></div>
-    <div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap">
-      <div style="flex:1;min-width:240px;background:var(--w);border:1px solid var(--bd);border-radius:var(--rl);padding:18px">
-        <div style="font-weight:600;font-size:15px;margin-bottom:14px">My Account</div>
-        <div style="margin-bottom:10px">
-          <label class="lbl">Display Name</label>
-          <input class="field" id="s-display-name" placeholder="Your name" style="margin-top:6px">
-        </div>
-        <button class="btn btn-ol btn-sm" onclick="saveDisplayName()" style="margin-bottom:14px">Save Name</button>
-        <div><button class="btn btn-ol btn-sm" onclick="openModal('m-change-pw')">Change Password</button></div>
-      </div>
-      <div class="ldr-only" style="flex:2;min-width:300px;background:var(--w);border:1px solid var(--bd);border-radius:var(--rl);padding:18px">
-        <div class="sh" style="margin-bottom:10px"><div style="font-weight:600;font-size:15px">User Management</div></div>
-        <div style="font-size:12px;color:var(--tx2);margin-bottom:14px">To add a new user, invite them via the Supabase dashboard. Once they sign in, their role can be set here.</div>
-        <table class="tbl">
-          <thead><tr><th>Name</th><th>Email</th><th>Role</th><th></th></tr></thead>
-          <tbody id="su-tbody"></tbody>
-        </table>
-      </div>
-    </div>
-  </div></div></div>
+</div></div>
 
 <script>
 // ── SUPABASE CONFIG ───────────────────────────────────────────────────────────
