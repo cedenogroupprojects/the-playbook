@@ -248,6 +248,8 @@ code{background:var(--s2);color:var(--tx2);padding:1px 5px;border-radius:3px;fon
 .empty{text-align:center;padding:32px;color:var(--mu);font-size:12px}
 .toast{position:fixed;bottom:20px;right:20px;background:var(--tx);color:#fff;padding:8px 16px;border-radius:var(--r);font-size:12px;font-weight:500;z-index:9999;opacity:0;transform:translateY(6px);transition:all .2s;pointer-events:none}
 .toast.show{opacity:1;transform:translateY(0)}
+
+[data-role="va"] .ldr-only{display:none!important;}
 </style>
 </head>
 <body>
@@ -283,6 +285,7 @@ code{background:var(--s2);color:var(--tx2);padding:1px 5px;border-radius:3px;fon
     <div class="ntab" data-p="templates" onclick="gp('templates',this)">Templates</div>
     <div class="ntab" data-p="payment" onclick="gp('payment',this)">Payment Requests</div>
     <div class="ntab" data-p="checkins" onclick="gp('checkins',this)">Check-Ins</div>
+    <div class="ntab" data-p="settings" onclick="gp('settings',this);renderSettingsAsync()">Settings</div>
   </div>
   <div class="page active" id="page-dashboard">
     <div class="stat-grid">
@@ -316,7 +319,7 @@ code{background:var(--s2);color:var(--tx2);padding:1px 5px;border-radius:3px;fon
     <div id="tasks-wrap"></div>
   </div>
   <div class="page" id="page-templates">
-    <div class="sh"><div class="sh-title">Templates</div><div class="sp"></div><button class="btn btn-ol btn-sm" onclick="openModal('m-new-prog')">+ New Program</button></div>
+    <div class="sh"><div class="sh-title">Templates</div><div class="sp"></div><button class="btn btn-ol btn-sm ldr-only" onclick="openModal('m-new-prog')">+ New Program</button></div>
     <div class="prog-sel-bar">
       <label>Coaching Program</label>
       <select class="prog-sel" id="tpl-prog" onchange="switchProg()"></select>
@@ -462,7 +465,29 @@ code{background:var(--s2);color:var(--tx2);padding:1px 5px;border-radius:3px;fon
     <button class="btn btn-gh" onclick="closeModal('m-change-pw')">Cancel</button>
     <button class="btn btn-dk" onclick="changePassword()">Update Password</button>
   </div>
-</div></div>
+
+  <div class="page" id="page-settings">
+    <div class="sh"><div class="sh-title">Settings</div></div>
+    <div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap">
+      <div style="flex:1;min-width:240px;background:var(--w);border:1px solid var(--bd);border-radius:var(--rl);padding:18px">
+        <div style="font-weight:600;font-size:15px;margin-bottom:14px">My Account</div>
+        <div style="margin-bottom:10px">
+          <label class="lbl">Display Name</label>
+          <input class="field" id="s-display-name" placeholder="Your name" style="margin-top:6px">
+        </div>
+        <button class="btn btn-ol btn-sm" onclick="saveDisplayName()" style="margin-bottom:14px">Save Name</button>
+        <div><button class="btn btn-ol btn-sm" onclick="openModal('m-change-pw')">Change Password</button></div>
+      </div>
+      <div class="ldr-only" style="flex:2;min-width:300px;background:var(--w);border:1px solid var(--bd);border-radius:var(--rl);padding:18px">
+        <div class="sh" style="margin-bottom:10px"><div style="font-weight:600;font-size:15px">User Management</div></div>
+        <div style="font-size:12px;color:var(--tx2);margin-bottom:14px">To add a new user, invite them via the Supabase dashboard. Once they sign in, their role can be set here.</div>
+        <table class="tbl">
+          <thead><tr><th>Name</th><th>Email</th><th>Role</th><th></th></tr></thead>
+          <tbody id="su-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div></div></div>
 
 <script>
 // ── SUPABASE CONFIG ───────────────────────────────────────────────────────────
@@ -475,7 +500,8 @@ let programs = [];
 let agents = [];
 let scheduledCalls = [];
 let currentUser = null;
-let role = 'va', _tplProg = '', _tplTab = 'emails', _inv = '', _addEmailProg = '';
+let role = 'va'
+let userProfile=null;, _tplProg = '', _tplTab = 'emails', _inv = '', _addEmailProg = '';
 let dragSrc = null, dragType = null, dragProg = null, dragSid = null, _qiInvText = '';
 
 const PBC = ['pb0','pb1','pb2','pb3'];
@@ -516,8 +542,11 @@ async function doLogin() {
   app.style.flexDirection = 'column';
   document.getElementById('uchip').textContent = email;
 
-  const isLeadership = email.includes('leadership') || email.includes('robert') || email.includes('jeffry');
-  document.getElementById('rtop').textContent = isLeadership ? 'LEADERSHIP' : 'VA';
+  let{data:prof}=await sb.from('user_profiles').select('*').eq('id',data.user.id).single();
+  if(!prof){const isLdr=email.includes('leadership')||email.includes('robert')||email.includes('jeffry');const{data:np}=await sb.from('user_profiles').insert({id:data.user.id,email,role:isLdr?'leadership':'va'}).select().single();prof=np;}
+  userProfile=prof;
+  document.body.dataset.role=prof?.role||'va';
+  document.getElementById('rtop').textContent=prof?.role==='leadership'?'LEADERSHIP':'VA';
 
   await initApp();
 }
@@ -556,8 +585,11 @@ window.addEventListener('load', async () => {
     app.style.display = 'flex';
     app.style.flexDirection = 'column';
     document.getElementById('uchip').textContent = email;
-    const isLeadership = email.includes('leadership') || email.includes('robert') || email.includes('jeffry');
-    document.getElementById('rtop').textContent = isLeadership ? 'LEADERSHIP' : 'VA';
+    let{data:prof}=await sb.from('user_profiles').select('*').eq('id',session.user.id).single();
+    if(!prof){const isLdr=email.includes('leadership')||email.includes('robert')||email.includes('jeffry');const{data:np}=await sb.from('user_profiles').insert({id:session.user.id,email,role:isLdr?'leadership':'va'}).select().single();prof=np;}
+    userProfile=prof;
+    document.body.dataset.role=prof?.role||'va';
+    document.getElementById('rtop').textContent=prof?.role==='leadership'?'LEADERSHIP':'VA';
     await initApp();
   }
 });
@@ -1277,6 +1309,24 @@ function buildInv(){
 }
 function copyInv(){copyText(_invText);const btn=document.querySelector('#inv-copy button');const o=btn.textContent;btn.textContent='Copied!';setTimeout(()=>btn.textContent=o,1800);showToast('Invoice copied')}
 
+
+let userProfiles=[];
+async function loadUserProfiles(){const{data}=await sb.from('user_profiles').select('*').order('created_at');userProfiles=data||[];}
+async function renderSettingsAsync(){
+  const dn=document.getElementById('s-display-name');
+  if(dn&&userProfile)dn.value=userProfile.display_name||'';
+  if(userProfile?.role!=='leadership')return;
+  await loadUserProfiles();
+  renderSettingsUsers();
+}
+function renderSettingsUsers(){
+  const tbody=document.getElementById('su-tbody');
+  if(!tbody)return;
+  tbody.innerHTML=userProfiles.map(p=>'<tr><td>'+(p.display_name||'—')+'</td><td>'+p.email+'</td><td><select onchange="updateUserRole(\''+p.id+'\',this.value)"'+(p.id===userProfile?.id?' disabled':'')+'><option value="va"'+(p.role==='va'?' selected':'')+'>VA</option><option value="leadership"'+(p.role==='leadership'?' selected':'')+'>Leadership</option></select></td><td>'+(p.id!==userProfile?.id?'<button style="background:#ef4444;color:#fff;border:none;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:12px" onclick="removeUser(\''+p.id+'\')">Remove</button>':'')+'</td></tr>').join('');
+}
+async function updateUserRole(id,role){await sb.from('user_profiles').update({role}).eq('id',id);showToast('Role updated');await loadUserProfiles();renderSettingsUsers();}
+async function removeUser(id){if(!confirm('Remove this user\'s access?'))return;await sb.from('user_profiles').delete().eq('id',id);showToast('User removed');await loadUserProfiles();renderSettingsUsers();}
+async function saveDisplayName(){const name=document.getElementById('s-display-name')?.value?.trim();if(!name){alert('Enter a display name');return;}await sb.from('user_profiles').update({display_name:name}).eq('id',userProfile.id);userProfile.display_name=name;showToast('Name saved');}
 </script>
 </body>
 </html>
