@@ -1025,16 +1025,17 @@ function qcTask(id, sid, i, el) {
 function initDrag(container, type, progId, stageId) {
   container.querySelectorAll('[data-drag]').forEach(item => {
     item.draggable = true;
-    item.addEventListener('dragstart', e => { dragSrc=item; dragType=type; dragProg=progId; dragSid=stageId; item.classList.add('dragging'); e.dataTransfer.effectAllowed='move'; });
-    item.addEventListener('dragend', () => { item.classList.remove('dragging'); container.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over')); });
-    item.addEventListener('dragover', e => { e.preventDefault(); if(item!==dragSrc) item.classList.add('drag-over'); });
-    item.addEventListener('dragleave', () => item.classList.remove('drag-over'));
+    item.addEventListener('dragstart', e => { e.stopPropagation(); dragSrc=item; dragType=type; dragProg=progId; dragSid=stageId; item.classList.add('dragging'); e.dataTransfer.effectAllowed='move'; });
+    item.addEventListener('dragend', e => { e.stopPropagation(); item.classList.remove('dragging'); container.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over')); });
+    item.addEventListener('dragover', e => { e.stopPropagation(); e.preventDefault(); if(item!==dragSrc) item.classList.add('drag-over'); });
+    item.addEventListener('dragleave', e => { e.stopPropagation(); item.classList.remove('drag-over'); });
     item.addEventListener('drop', e => {
-      e.preventDefault(); item.classList.remove('drag-over');
+      e.stopPropagation(); e.preventDefault(); item.classList.remove('drag-over');
       if (!dragSrc || dragSrc===item || dragType!==type) return;
       const p = programs.find(x => x.id === dragProg); if (!p) return;
       const from = parseInt(dragSrc.dataset.drag);
       const to = parseInt(item.dataset.drag);
+      if (isNaN(from) || isNaN(to)) return;
       if (type==='email') { const [itm]=p.emails.splice(from,1); p.emails.splice(to,0,itm); }
       else if (type==='stage') { const [itm]=p.stages.splice(from,1); p.stages.splice(to,0,itm); }
       else if (type==='task') { const s=p.stages.find(x=>x.id===dragSid); if(!s) return; const [itm]=s.tasks.splice(from,1); s.tasks.splice(to,0,itm); }
@@ -1044,7 +1045,6 @@ function initDrag(container, type, progId, stageId) {
     });
   });
 }
-
 // ── TEMPLATES ─────────────────────────────────────────────────────────────────
 
 function renderTemplates(){
