@@ -795,11 +795,11 @@ function emailLinkPill(progId,emailId,agentName){
 
 function openAgentDetail(id){
   const a=agents.find(x=>x.id===id);if(!a)return;
-  const prog=programs.find(p=>p.id===a.prog)
+  const prog=programs.find(p=>p.id===a.prog)||null;
   document.getElementById('ad-title').textContent=fn(a);
   const pct=agPct(a);
-  let h=`<div class="g3" style="margin-bottom:14px">
-    <div class="card-sm"><div class="ts">Program</div><div style="font-size:12px;margin-top:2px;font-weight:600">${(prog&&prog.name||'No Program')}</div></div>
+  let info=`<div class="g3" style="margin-bottom:14px">
+    <div class="card-sm"><div class="ts">Program</div><div style="font-size:12px;margin-top:2px;font-weight:600">${prog&&prog.name||'No Program'}</div></div>
     <div class="card-sm"><div class="ts">Rate</div><div style="font-size:12px;margin-top:2px;font-weight:500">${a.tier}</div></div>
     <div class="card-sm"><div class="ts">VA</div><div style="font-size:12px;margin-top:2px;font-weight:500">${a.va}</div></div>
   </div>
@@ -811,19 +811,20 @@ function openAgentDetail(id){
   <div class="flex" style="margin-bottom:4px"><span class="ts">Progress: <strong style="color:var(--tx)">${pct}%</strong></span></div>
   <div class="pbar" style="height:5px;margin-bottom:14px"><div class="pfill" style="width:${pct}%"></div></div>
   <div class="flex" style="margin-bottom:5px"><span class="ts" style="font-weight:600;color:var(--tx)">Current Stage</span></div>
-  <div class="flex" style="margin-bottom:18px;gap:5px;flex-wrap:wrap">
+  <div class="flex" style="margin-bottom:6px;gap:5px;flex-wrap:wrap">
     ${(prog?prog.stages:[]).map(s=>`<button class="btn btn-xs ${a.stage===s.id?'btn-dk':'btn-ol'}" onclick="setAgStage('${id}','${s.id}')">${s.label}</button>`).join('')}
   </div>`;
+  let tasks='';
   (prog?prog.stages:[]).forEach(s=>{
-    const tasks=a.tasks[s.id]||[];const done=tasks.filter(t=>t.done).length;
-    h+=`<div style="margin-bottom:16px">
+    const st=a.tasks[s.id]||[];const done=st.filter(t=>t.done).length;
+    tasks+=`<div style="margin-bottom:16px">
       <div class="flex" style="margin-bottom:7px">
         <span style="font-size:12px;font-weight:600">${s.label}</span>
-        <span class="badge b-gray" style="margin-left:6px">${done}/${tasks.length}</span>
+        <span class="badge b-gray" style="margin-left:6px">${done}/${st.length}</span>
         <div class="sp"></div><button class="ieb" onclick="addAgTask('${id}','${s.id}')">+ task</button>
       </div>
       <div style="background:var(--s2);border:1px solid var(--bd);border-radius:var(--r);padding:3px 12px">
-        ${tasks.length?tasks.map((t,i)=>`
+        ${st.length?st.map((t,i)=>`
           <div class="task-item">
             <div class="tcb${t.done?' done':''}" onclick="toggleAgTask('${id}','${s.id}',${i})">
               ${t.done?'<svg width="9" height="9" viewBox="0 0 9 9"><polyline points="1,4.5 3.5,7 8,1.5" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/></svg>':''}
@@ -837,7 +838,7 @@ function openAgentDetail(id){
       </div>
     </div>`;
   });
-  h+=`<div class="divider"></div>
+  const footer=`<div class="divider"></div>
     <div class="flex" style="justify-content:space-between">
       <button class="btn btn-rd btn-sm" onclick="delAgent('${id}')">Remove Agent</button>
       <div class="flex" style="gap:6px">
@@ -846,10 +847,27 @@ function openAgentDetail(id){
         <button class="btn btn-dk btn-sm" onclick="saveAgentAndClose('${id}')">Save & Close</button>
       </div>
     </div>`;
+  let h=`<div style="display:flex;gap:0;border-bottom:1px solid var(--bd);margin-bottom:16px">
+    <button id="ad-tab-info" onclick="adTab('info')" style="background:none;border:none;padding:8px 18px;font-size:13px;font-weight:600;cursor:pointer;border-bottom:2px solid var(--acc);color:var(--acc)">Info</button>
+    <button id="ad-tab-tasks" onclick="adTab('tasks')" style="background:none;border:none;padding:8px 18px;font-size:13px;font-weight:600;cursor:pointer;border-bottom:2px solid transparent;color:var(--tx2)">Tasks</button>
+  </div>
+  <div id="ad-info-pane">${info}</div>
+  <div id="ad-tasks-pane" style="display:none">${tasks}</div>
+  ${footer}`;
   document.getElementById('ad-body').innerHTML=h;
   openModal('m-agent');
 }
 
+function adTab(t){
+  document.getElementById('ad-info-pane').style.display=t==='info'?'':'none';
+  document.getElementById('ad-tasks-pane').style.display=t==='tasks'?'':'none';
+  const ib=document.getElementById('ad-tab-info');
+  const tb=document.getElementById('ad-tab-tasks');
+  ib.style.borderBottomColor=t==='info'?'var(--acc)':'transparent';
+  ib.style.color=t==='info'?'var(--acc)':'var(--tx2)';
+  tb.style.borderBottomColor=t==='tasks'?'var(--acc)':'transparent';
+  tb.style.color=t==='tasks'?'var(--acc)':'var(--tx2)';
+}
 function saveAgentAndClose(id) {
   const a = agents.find(x => x.id === id);
   if (a) persist('agent', a);
@@ -950,35 +968,47 @@ async function saveAgent() {
 
 function renderTasks(){
   syncAll();
+  if(!window._tkOpen)window._tkOpen=new Set();
   const pf=document.getElementById('tk-pf')?.value||'all';
   const af=document.getElementById('tk-af')?.value||'all';
   const list=agents.filter(a=>(pf==='all'||a.prog===pf)&&(af==='all'||a.id===af));
   let html='';
   list.forEach(a=>{
-    const prog=programs.find(p=>p.id===a.prog);if(!prog)return;
-    let ah='';
-    prog.stages.forEach(s=>{
-      (a.tasks[s.id]||[]).filter(t=>!t.done).forEach(t=>{
-        const ri=(a.tasks[s.id]||[]).indexOf(t);
-        ah+=`<div class="task-item"><div class="tcb" onclick="qcTask('${a.id}','${s.id}',${ri},this)"></div>
-          <div><div class="tlbl">${t.text}</div><div class="tstg">${s.label} · ${prog.name}</div>
-          ${t.emailLink?emailLinkPill(a.prog,t.emailLink,fn(a)):''}</div></div>`;
+    const prog=programs.find(p=>p.id===a.prog)||null;
+    const pending=Object.values(a.tasks).flat().filter(t=>!t.done).length;
+    const isOpen=window._tkOpen.has(a.id);
+    let th='';
+    if(isOpen){
+      (prog?prog.stages:[]).forEach(s=>{
+        (a.tasks[s.id]||[]).forEach((t,ri)=>{
+          if(t.done)return;
+          const realIdx=(a.tasks[s.id]||[]).indexOf(t);
+          th+=`<div class="task-item"><div class="tcb" onclick="qcTask('${a.id}','${s.id}',${realIdx},this)"></div>
+            <div><div class="tlbl">${t.text}</div><div class="tstg">${s.label}${prog?' · '+prog.name:''}</div>
+            ${t.emailLink?emailLinkPill(a.prog,t.emailLink,fn(a)):''}</div></div>`;
+        });
       });
-    });
-    if(!ah)return;
-    const pc=Object.values(a.tasks).flat().filter(t=>!t.done).length;
-    html+=`<div class="card" style="margin-bottom:10px">
-      <div class="flex" style="margin-bottom:10px">
-        <div class="av">${ini(a)}</div>
-        <div><div class="an" style="font-size:13px">${fn(a)}</div><div class="asub">${prog.name}</div></div>
-        <div class="sp"></div><span class="badge b-yellow">${pc} pending</span>
+      if(!th)th='<div class="ts" style="padding:10px 0;text-align:center;color:var(--tx2)">All tasks complete ✓</div>';
+    }
+    html+=`<div class="card" style="margin-bottom:8px">
+      <div class="flex" style="cursor:pointer;user-select:none;align-items:center" onclick="tkToggle('${a.id}')">
+        <div class="av" style="flex-shrink:0">${ini(a)}</div>
+        <div style="min-width:0"><div class="an" style="font-size:13px">${fn(a)}</div><div class="asub">${prog?prog.name:'No Program'}</div></div>
+        <div class="sp"></div>
+        ${pending?'<span class="badge b-yellow" style="margin-right:10px">'+pending+' pending</span>':'<span class="badge b-gray" style="margin-right:10px">All done</span>'}
+        <span style="font-size:16px;color:var(--tx2);transition:transform .2s;display:inline-block;transform:${isOpen?'rotate(90deg)':'rotate(0deg)'}">▸</span>
       </div>
-      <div style="background:var(--s2);border:1px solid var(--bd);border-radius:var(--r);padding:3px 12px">${ah}</div>
+      ${isOpen?'<div style="margin-top:10px;background:var(--s2);border:1px solid var(--bd);border-radius:var(--r);padding:3px 12px">'+th+'</div>':''}
     </div>`;
   });
-  document.getElementById('tasks-wrap').innerHTML=html||'<div class="card"><div class="empty">No pending tasks for this selection.</div></div>';
+  document.getElementById('tasks-wrap').innerHTML=html||'<div class="card"><div class="empty">No agents match this filter.</div></div>';
 }
 
+function tkToggle(id){
+  if(!window._tkOpen)window._tkOpen=new Set();
+  if(window._tkOpen.has(id))window._tkOpen.delete(id);else window._tkOpen.add(id);
+  renderTasks();
+}
 function qcTask(id, sid, i, el) {
   el.classList.add('done');
   el.innerHTML = '<svg width="9" height="9" viewBox="0 0 9 9"><polyline points="1,4.5 3.5,7 8,1.5" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/></svg>';
