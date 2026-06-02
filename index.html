@@ -763,6 +763,8 @@ function syncAll(){
   const tk=document.getElementById('tk-af');if(tk)tk.innerHTML=ao;
 
   const agSf=document.getElementById('ag-sf');if(agSf){const pfv=document.getElementById('ag-pf')?.value||'all';const sprog=pfv==='all'?null:programs.find(p=>p.id===pfv);const sNames=pipelineStages.map(s=>s.label);const cur=agSf.value;agSf.innerHTML='<option value="all">All Stages</option>'+pipelineStages.map(s=>`<option value="${s.id}">${s.label}</option>`).join('');
+  }
+}
 
 // ── AGENTS ────────────────────────────────────────────────────────────────────
 
