@@ -284,7 +284,6 @@ code{background:var(--s2);color:var(--tx2);padding:1px 5px;border-radius:3px;fon
     <div class="ntab" data-p="tasks" onclick="gp('tasks',this)">Task Tracker</div>
     <div class="ntab" data-p="templates" onclick="gp('templates',this)">Templates</div>
     <div class="ntab" data-p="payment" onclick="gp('payment',this)">Payment Requests</div>
-    <div class="ntab" data-p="checkins" onclick="gp('checkins',this)">Check-Ins</div>
     <div class="ntab" data-p="settings" onclick="gp('settings',this);renderSettingsAsync()">Settings</div>
   </div>
   <div class="page active" id="page-dashboard">
@@ -364,14 +363,6 @@ code{background:var(--s2);color:var(--tx2);padding:1px 5px;border-radius:3px;fon
       </div>
     </div>
   </div>
-  <div class="page" id="page-checkins">
-    <div class="sh"><div class="sh-title">Check-In Notifications</div><div class="sp"></div>
-      <select class="field" style="width:140px;margin:0" id="notif-filter" onchange="renderNotifs()">
-        <option value="all">All</option><option value="urgent">Urgent</option><option value="warn">Pending</option><option value="info">Info</option>
-      </select>
-    </div>
-    <div id="notifs-list"></div>
-  </div>
   <div class="page" id="page-settings">
     <div class="sh"><div class="sh-title">Settings</div></div>
     <div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap">
@@ -392,6 +383,11 @@ code{background:var(--s2);color:var(--tx2);padding:1px 5px;border-radius:3px;fon
           <tbody id="su-tbody"></tbody>
         </table>
       </div>
+        <div class="ldr-only" style="flex:1;min-width:280px;background:var(--w);border:1px solid var(--bd);border-radius:var(--rl);padding:18px">
+          <div style="font-weight:600;font-size:15px;margin-bottom:14px">Pipeline Stages</div>
+          <div style="font-size:12px;color:var(--tx2);margin-bottom:12px">These stages apply to all agents across all programs.</div>
+          <div id="s-pipeline-wrap"></div>
+        </div>
     </div>
   </div>
 </div>
@@ -497,6 +493,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // Runtime state
 let programs = [];
+let pipelineStages = [];
 let agents = [];
 let scheduledCalls = [];
 let currentUser = null;
@@ -510,7 +507,7 @@ const ini = a => (a.first[0] + (a.last[0] || '')).toUpperCase();
 const fn = a => a.first + ' ' + a.last;
 const pidx = id => programs.findIndex(p => p.id === id);
 function pbadge(id){const i=Math.max(0,pidx(id));const p=programs[i];if(!p)return'<span class="chip">—</span>';return`<span class="badge ${PBC[i%4]}">${p.name}</span>`}
-function stageLbl(a){const p=programs.find(x=>x.id===a.prog);if(!p)return'—';const s=p.stages.find(x=>x.id===a.stage);return s?s.label:'—'}
+function stageLbl(a){const s=pipelineStages.find(x=>x.id===a.stage);return s?s.label:'—'}
 function agPct(a){const all=Object.values(a.tasks).flat();return all.length?Math.round(all.filter(t=>t.done).length/all.length*100):0}
 function showToast(m='Saved'){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200)}
 function copyText(text){navigator.clipboard.writeText(text).catch(()=>{})}
@@ -595,12 +592,17 @@ window.addEventListener('load', async () => {
 
 // ── DB: PROGRAMS ──────────────────────────────────────────────────────────────
 
+async function loadPipelineStages() {
+  const {data} = await sb.from('pipeline_stages').select('*').order('sort_order');
+  pipelineStages = data || [];
+}
+
 async function initApp() {
+  await loadPipelineStages();
   await loadPrograms();
   await loadAgents();
   syncAll();
 }
-
 async function loadPrograms() {
   const { data, error } = await sb
     .from('programs')
@@ -611,7 +613,7 @@ async function loadPrograms() {
     id: p.id,
     name: p.name,
     emails: p.email_templates || [],
-    stages: p.task_stages || [],
+    stageTasks: p.task_stages || {},
   }));
 }
 
@@ -620,7 +622,7 @@ async function saveProgram(prog) {
   const payload = {
     name: prog.name,
     email_templates: prog.emails,
-    task_stages: prog.stages,
+    task_stages: prog.stageTasks || {},
   };
   if (isNew) {
     const { data, error } = await sb.from('programs').insert(payload).select().single();
@@ -727,7 +729,6 @@ function gp(id, tab) {
   if (id === 'agents') renderAgents();
   if (id === 'tasks') renderTasks();
   if (id === 'templates') renderTemplates();
-  if (id === 'checkins') renderNotifs();
 }
 function openModal(id){document.getElementById(id).classList.add('open')}
 function closeModal(id){document.getElementById(id).classList.remove('open')}
@@ -742,10 +743,10 @@ function renderDash(){
     {type:'urgent',agentId:'',title:'Check-ins load from Supabase after setup',meta:'Configure Supabase to see live alerts',actions:[{label:'Setup →',fn:"gp('templates',document.querySelector('[data-p=templates]'))"}]},
   ].map(n=>`<div class="att-item ${n.type}"><div class="att-body"><div class="att-title">${n.title}</div><div class="att-meta">${n.meta}</div></div><div class="ni-actions">${n.actions.map(a=>`<button class="btn btn-ol btn-xs" onclick="${a.fn}">${a.label}</button>`).join('')}</div></div>`).join('');
   let pipeItems=[];
-  programs.forEach((p,pi)=>p.stages.forEach(s=>{
-    const c=agents.filter(a=>a.prog===p.id&&a.stage===s.id).length;
-    pipeItems.push({label:s.label,sub:p.name,count:c,ci:pi});
-  }));
+  pipelineStages.forEach((s,si)=>{
+    const c=agents.filter(a=>a.stage===s.id).length;
+    pipeItems.push({label:s.label,sub:c+' agent'+(c!==1?'s':''),count:c,ci:si});
+  });
   document.getElementById('dash-pipe').innerHTML=pipeItems.length?pipeItems.map(e=>`
     <div class="pipe-item"><div class="pipe-row"><span class="pdot ${DC[e.ci%6]}"></span><span class="pipe-name">${e.label} <span style="font-size:10px;color:var(--mu)">${e.sub}</span></span><span class="pipe-ct">${e.count} agent${e.count!==1?'s':''}</span></div>
     <div class="pbar"><div class="pfill" style="width:${agents.length?Math.round(e.count/agents.length*100):0}%"></div></div></div>`).join(''):'<div class="empty">No programs yet — go to Templates to create one</div>';
@@ -761,7 +762,7 @@ function syncAll(){
   const ao='<option value="all">All Agents</option>'+agents.map(a=>`<option value="${a.id}">${fn(a)}</option>`).join('');
   const tk=document.getElementById('tk-af');if(tk)tk.innerHTML=ao;
 
-  const agSf=document.getElementById('ag-sf');if(agSf){const pfv=document.getElementById('ag-pf')?.value||'all';const sprog=pfv==='all'?null:programs.find(p=>p.id===pfv);const sNames=sprog?sprog.stages.map(s=>s.label):[...new Set(programs.flatMap(p=>p.stages.map(s=>s.label)))];const cur=agSf.value;agSf.innerHTML='<option value="all">All Stages</option>'+sNames.map(l=>'<option value="'+l+'">'+l+'</option>').join('');if([...agSf.options].some(o=>o.value===cur))agSf.value=cur;}}
+  const agSf=document.getElementById('ag-sf');if(agSf){const pfv=document.getElementById('ag-pf')?.value||'all';const sprog=pfv==='all'?null:programs.find(p=>p.id===pfv);const sNames=pipelineStages.map(s=>s.label);const cur=agSf.value;agSf.innerHTML='<option value="all">All Stages</option>'+pipelineStages.map(s=>`<option value="${s.id}">${s.label}</option>`).join('');
 
 // ── AGENTS ────────────────────────────────────────────────────────────────────
 
@@ -771,7 +772,7 @@ function renderAgents(){
   const pf=document.getElementById('ag-pf')?.value||'all';
   const sf=document.getElementById('ag-sf')?.value||'all';
   const pgf=document.getElementById('ag-progress-f')?.value||'all';
-  const list=agents.filter(a=>(pf==='all'||a.prog===pf)&&(q?fn(a).toLowerCase().includes(q)||(a.email||'').toLowerCase().includes(q):true)&&(sf==='all'||stageLbl(a)===sf)&&(pgf==='all'||(pgf==='not_started'&&agPct(a)===0)||(pgf==='in_progress'&&agPct(a)>0&&agPct(a)<100)||(pgf==='done'&&agPct(a)===100))).filter(a=>{const df=window._dashFilter;if(!df)return true;if(df==='active')return a.stage!=='s1';if(df==='pending')return a.stage==='s1';if(df==='tasks')return agPct(a)>0&&agPct(a)<100;return true;});
+  const list=agents.filter(a=>(pf==='all'||a.prog===pf)&&(q?fn(a).toLowerCase().includes(q)||(a.email||'').toLowerCase().includes(q):true)&&(sf==='all'||a.stage===sf)&&(pgf==='all'||(pgf==='not_started'&&agPct(a)===0)||(pgf==='in_progress'&&agPct(a)>0&&agPct(a)<100)||(pgf==='done'&&agPct(a)===100))).filter(a=>{const df=window._dashFilter;if(!df)return true;if(df==='active')return a.stage!=='s1';if(df==='pending')return a.stage==='s1';if(df==='tasks')return agPct(a)>0&&agPct(a)<100;return true;});
   document.getElementById('ag-tbody').innerHTML=list.length?list.map(a=>{
     const pct=agPct(a);
     return`<tr class="cr" onclick="openAgentDetail('${a.id}')">
@@ -812,10 +813,10 @@ function openAgentDetail(id){
   <div class="pbar" style="height:5px;margin-bottom:14px"><div class="pfill" style="width:${pct}%"></div></div>
   <div class="flex" style="margin-bottom:5px"><span class="ts" style="font-weight:600;color:var(--tx)">Current Stage</span></div>
   <div class="flex" style="margin-bottom:6px;gap:5px;flex-wrap:wrap">
-    ${(prog?prog.stages:[]).map(s=>`<button class="btn btn-xs ${a.stage===s.id?'btn-dk':'btn-ol'}" onclick="setAgStage('${id}','${s.id}')">${s.label}</button>`).join('')}
+    ${pipelineStages.map(s=>`<button class="btn btn-xs ${a.stage===s.id?'btn-dk':'btn-ol'}" onclick="setAgStage('${id}','${s.id}')">${s.label}</button>`).join('')}
   </div>`;
   let tasks='';
-  (prog?prog.stages:[]).forEach(s=>{
+  pipelineStages.forEach(s=>{
     const st=a.tasks[s.id]||[];const done=st.filter(t=>t.done).length;
     tasks+=`<div style="margin-bottom:16px">
       <div class="flex" style="margin-bottom:7px">
@@ -939,7 +940,7 @@ async function saveAgent() {
   const progId = document.getElementById('na-prog').value;
   const prog = programs.find(p => p.id === progId);
   const tasks = {};
-  if (prog) prog.stages.forEach(s => { tasks[s.id] = s.tasks.map(t => ({ text: t.text, emailLink: t.emailLink || null, done: false })); });
+  pipelineStages.forEach(s => { tasks[s.id] = ((prog&&prog.stageTasks&&prog.stageTasks[s.id])||[]).map(t => ({ text: t.text, emailLink: t.emailLink || null, done: false })); });
 
   const newAgent = {
     id: 'temp',
@@ -948,7 +949,7 @@ async function saveAgent() {
     phone: document.getElementById('na-phone').value,
     tier: document.getElementById('na-tier').value,
     prog: progId,
-    stage: prog?.stages[0]?.id || 's1',
+    stage: pipelineStages[0]?.id || '',
     start: document.getElementById('na-start').value || new Date().toISOString().split('T')[0],
     va: document.getElementById('na-va').value,
     notes: document.getElementById('na-notes').value,
@@ -979,7 +980,7 @@ function renderTasks(){
     const isOpen=window._tkOpen.has(a.id);
     let th='';
     if(isOpen){
-      (prog?prog.stages:[]).forEach(s=>{
+      pipelineStages.forEach(s=>{
         (a.tasks[s.id]||[]).forEach((t,ri)=>{
           if(t.done)return;
           const realIdx=(a.tasks[s.id]||[]).indexOf(t);
@@ -1037,8 +1038,8 @@ function initDrag(container, type, progId, stageId) {
       const to = parseInt(item.dataset.drag);
       if (isNaN(from) || isNaN(to)) return;
       if (type==='email') { const [itm]=p.emails.splice(from,1); p.emails.splice(to,0,itm); }
-      else if (type==='stage') { const [itm]=p.stages.splice(from,1); p.stages.splice(to,0,itm); }
-      else if (type==='task') { const s=p.stages.find(x=>x.id===dragSid); if(!s) return; const [itm]=s.tasks.splice(from,1); s.tasks.splice(to,0,itm); }
+      
+      else if (type==='task') { if(!p.stageTasks||!p.stageTasks[dragSid])return; const tasks=p.stageTasks[dragSid]; const [itm]=tasks.splice(from,1); tasks.splice(to,0,itm); }
       persist('program', p);
       renderTplPanels();
       showToast('Order saved');
@@ -1113,17 +1114,16 @@ function saveNewEmail(){
 
 function renderTP(prog){
   const wrap=document.getElementById('tpl-tp');
-  let h=prog.stages.map((s,si)=>`
-    <div class="sblk" data-drag="${si}">
+  let h=pipelineStages.map((s,si)=>{
+    const tasks=prog.stageTasks&&prog.stageTasks[s.id]||[];
+    return `<div class="sblk">
       <div class="sblk-head">
-        <span class="drag-handle">⠿</span>
         <span class="pdot ${DC[si%6]}"></span>
-        <input class="sblk-name" value="${s.label.replace(/"/g,'&quot;')}" onchange="saveSN('${prog.id}','${s.id}',this.value)"/>
+        <span style="font-size:13px;font-weight:600">${s.label}</span>
         <div class="sp"></div>
-        <button class="btn btn-rd btn-xs" onclick="delStage('${prog.id}','${s.id}')">Remove Stage</button>
       </div>
       <div class="sblk-body" id="tb-${prog.id}-${s.id}">
-        ${s.tasks.map((t,ti)=>`
+        ${tasks.map((t,ti)=>`
           <div class="tedit-row" data-drag="${ti}">
             <span class="drag-handle" style="font-size:12px">⠿</span>
             <input class="tedit-inp" value="${(typeof t==='string'?t:t.text).replace(/"/g,'&quot;')}" oninput="saveST('${prog.id}','${s.id}',${ti},this.value)"/>
@@ -1135,85 +1135,47 @@ function renderTP(prog){
           </div>`).join('')}
         <button class="btn btn-gh btn-xs" style="margin-top:5px" onclick="addST('${prog.id}','${s.id}')">+ Add task</button>
       </div>
-    </div>`).join('');
-  h+=`<button class="btn btn-ol btn-sm" style="margin-top:5px" onclick="addStage('${prog.id}')">+ Add Stage</button>`;
+    </div>`;
+  }).join('');
   wrap.innerHTML=h;
-  initDrag(wrap,'stage',prog.id,null);
-  prog.stages.forEach(s=>{const tb=document.getElementById(`tb-${prog.id}-${s.id}`);if(tb)initDrag(tb,'task',prog.id,s.id)});
+  pipelineStages.forEach(s=>{const tb=document.getElementById(`tb-${prog.id}-${s.id}`);if(tb)initDrag(tb,'task',prog.id,s.id)});
 }
 
-function saveSN(pid,sid,v){
-  const p=programs.find(x=>x.id===pid);if(!p)return;
-  const s=p.stages.find(x=>x.id===sid);
-  if(s&&v.trim()){s.label=v.trim();persist('program',p);}
-}
 function saveST(pid,sid,i,v){
   const p=programs.find(x=>x.id===pid);if(!p)return;
-  const s=p.stages.find(x=>x.id===sid);if(!s)return;
-  if(typeof s.tasks[i]==='string')s.tasks[i]={text:v,emailLink:null};
-  else s.tasks[i].text=v;
+  if(!p.stageTasks)p.stageTasks={};
+  if(!p.stageTasks[sid])p.stageTasks[sid]=[];
+  const t=p.stageTasks[sid][i];
+  if(typeof t==='string')p.stageTasks[sid][i]={text:v,emailLink:null};
+  else if(t)p.stageTasks[sid][i].text=v;
   persist('program',p);
 }
+
 function saveTaskLink(pid,sid,i,emailId){
   const p=programs.find(x=>x.id===pid);if(!p)return;
-  const s=p.stages.find(x=>x.id===sid);if(!s)return;
-  if(typeof s.tasks[i]==='string')s.tasks[i]={text:s.tasks[i],emailLink:emailId||null};
-  else s.tasks[i].emailLink=emailId||null;
+  if(!p.stageTasks)p.stageTasks={};
+  if(!p.stageTasks[sid])p.stageTasks[sid]=[];
+  const t=p.stageTasks[sid][i];
+  if(typeof t==='string')p.stageTasks[sid][i]={text:t,emailLink:emailId||null};
+  else if(t)p.stageTasks[sid][i].emailLink=emailId||null;
   persist('program',p);showToast('Email link saved');
 }
+
 function addST(pid,sid){
   const p=programs.find(x=>x.id===pid);if(!p)return;
-  const s=p.stages.find(x=>x.id===sid);if(!s)return;
-  s.tasks.push({text:'New task',emailLink:null});
+  if(!p.stageTasks)p.stageTasks={};
+  if(!p.stageTasks[sid])p.stageTasks[sid]=[];
+  p.stageTasks[sid].push({text:'New task',emailLink:null});
   persist('program',p);renderTplPanels();showToast('Task added');
 }
+
 function delST(pid,sid,i){
   const p=programs.find(x=>x.id===pid);if(!p)return;
-  const s=p.stages.find(x=>x.id===sid);if(!s)return;
-  if(!confirm('Remove?'))return;
-  s.tasks.splice(i,1);
-  persist('program',p);renderTplPanels();
-}
-function addStage(pid){
-  const p=programs.find(x=>x.id===pid);if(!p)return;
-  const lbl=prompt('New stage name:');if(!lbl?.trim())return;
-  p.stages.push({id:'s'+Date.now(),label:lbl.trim(),tasks:[{text:'New task',emailLink:null}]});
-  persist('program',p);renderTplPanels();showToast('Stage added');
-}
-function delStage(pid,sid){
-  const p=programs.find(x=>x.id===pid);if(!p)return;
-  if(!confirm('Remove this entire stage?'))return;
-  p.stages=p.stages.filter(s=>s.id!==sid);
+  if(!p.stageTasks||!p.stageTasks[sid])return;
+  p.stageTasks[sid].splice(i,1);
   persist('program',p);renderTplPanels();showToast('Removed');
 }
 
-async function createProgram() {
-  const name = document.getElementById('np-name').value.trim();
-  if (!name) { alert('Enter a program name'); return; }
-  const newProg = {
-    id: 'temp',
-    name,
-    emails: [{ id: 'e1', stage: 'Welcome', subject: `Welcome to ${name}`, body: `Hi [Agent Name],\n\nWelcome to ${name}.\n\n[Your Name]` }],
-    stages: [{ id: 's1', label: 'Onboarding', tasks: [{ text: 'Send welcome email', emailLink: 'e1' }, { text: 'Collect intake form', emailLink: null }, { text: 'Schedule kickoff call', emailLink: null }] }],
-  };
-  await saveProgram(newProg); // sets newProg.id to DB uuid
-  programs.push(newProg);
-  _tplProg = newProg.id;
-  showToast('Program created');
-  closeModal('m-new-prog');
-  document.getElementById('np-name').value = '';
-  renderTemplates();
-  syncAll();
-}
-
-function renameProgram() {
-  const p = programs.find(x => x.id === _tplProg); if (!p) return;
-  const n = prompt('New name:', p.name); if (!n?.trim()) return;
-  p.name = n.trim();
-  persist('program', p);
-  renderTemplates();
-  showToast('Renamed');
-}
 
 async function deleteProgram() {
   const p = programs.find(x => x.id === _tplProg); if (!p) return;
@@ -1344,9 +1306,47 @@ async function loadUserProfiles(){const{data}=await sb.from('user_profiles').sel
 async function renderSettingsAsync(){
   const dn=document.getElementById('s-display-name');
   if(dn&&userProfile)dn.value=userProfile.display_name||'';
-  if(userProfile?.role!=='leadership')return;
-  await loadUserProfiles();
-  renderSettingsUsers();
+  if(userProfile?.role==='leadership'){
+    await loadUserProfiles();
+    renderSettingsUsers();
+    renderPipelineStagesUI();
+  }
+}
+
+function renderPipelineStagesUI(){
+  const wrap=document.getElementById('s-pipeline-wrap');
+  if(!wrap)return;
+  wrap.innerHTML=pipelineStages.map((s,i)=>`<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--bd)">
+    <span style="font-size:13px;font-weight:500;flex:1">${s.label}</span>
+    <button class="btn btn-ol btn-xs" onclick="editPipelineStage('${s.id}','${s.label}')">Rename</button>
+    ${pipelineStages.length>1?'<button class="btn btn-rd btn-xs" onclick="delPipelineStage(''+s.id+'')">Remove</button>':''}
+  </div>`).join('')+`<div style="margin-top:10px;display:flex;gap:8px">
+    <input class="field" id="s-new-stage" placeholder="New stage name…" style="flex:1">
+    <button class="btn btn-dk btn-sm" onclick="addPipelineStage()">+ Add</button>
+  </div>`;
+}
+
+async function addPipelineStage(){
+  const name=document.getElementById('s-new-stage')?.value?.trim();
+  if(!name){alert('Enter a stage name');return;}
+  const maxOrder=pipelineStages.reduce((m,s)=>Math.max(m,s.sort_order),0);
+  const{data}=await sb.from('pipeline_stages').insert({label:name,color:'blue',sort_order:maxOrder+1}).select().single();
+  if(data){pipelineStages.push(data);renderPipelineStagesUI();document.getElementById('s-new-stage').value='';showToast('Stage added');}
+}
+
+async function editPipelineStage(id,current){
+  const name=prompt('Rename stage:',current);
+  if(!name||name===current)return;
+  await sb.from('pipeline_stages').update({label:name}).eq('id',id);
+  const s=pipelineStages.find(x=>x.id===id);if(s)s.label=name;
+  renderPipelineStagesUI();showToast('Stage renamed');
+}
+
+async function delPipelineStage(id){
+  if(!confirm('Remove this stage? Agents currently in this stage will show no stage.'))return;
+  await sb.from('pipeline_stages').delete().eq('id',id);
+  pipelineStages=pipelineStages.filter(x=>x.id!==id);
+  renderPipelineStagesUI();showToast('Stage removed');
 }
 function renderSettingsUsers(){
   const tbody=document.getElementById('su-tbody');
