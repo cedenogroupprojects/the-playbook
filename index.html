@@ -286,10 +286,10 @@ code{background:var(--s2);color:var(--tx2);padding:1px 5px;border-radius:3px;fon
   </div>
   <div class="page active" id="page-dashboard">
     <div class="stat-grid">
-      <div class="stat-card"><div class="stat-num" id="s-active">—</div><div class="stat-lbl">Active Agents</div></div>
-      <div class="stat-card"><div class="stat-num" id="s-pending">—</div><div class="stat-lbl">Pending Start</div></div>
-      <div class="stat-card"><div class="stat-num" id="s-tasks">—</div><div class="stat-lbl">Pending Tasks</div></div>
-      <div class="stat-card"><div class="stat-num">5</div><div class="stat-lbl">Awaiting Payment</div></div>
+      <div class="stat-card" style="cursor:pointer" onclick="goAgentsDash('active')"><div class="stat-num" id="s-active">—</div><div class="stat-lbl">Active Agents</div></div>
+      <div class="stat-card" style="cursor:pointer" onclick="goAgentsDash('pending')"><div class="stat-num" id="s-pending">—</div><div class="stat-lbl">Pending Start</div></div>
+      <div class="stat-card" style="cursor:pointer" onclick="goAgentsDash('tasks')"><div class="stat-num" id="s-tasks">—</div><div class="stat-lbl">Pending Tasks</div></div>
+      <div class="stat-card" style="cursor:pointer" onclick="goAgentsDash('all')"><div class="stat-num" id="s-pay">—</div><div class="stat-lbl">Awaiting Payment</div></div>
     </div>
     <div class="dash-grid">
       <div class="card"><div class="sh"><div class="sh-title">Needs Attention</div></div><div id="dash-att"></div></div>
@@ -298,10 +298,10 @@ code{background:var(--s2);color:var(--tx2);padding:1px 5px;border-radius:3px;fon
   </div>
   <div class="page" id="page-agents">
     <div class="sh"><div class="sh-title">Agents</div><div class="sp"></div>
-      <select class="field" style="width:190px;margin:0" id="ag-pf" onchange="renderAgents()"><option value="all">All Programs</option></select>
-      <input class="field" style="width:170px;margin:0" id="ag-search" placeholder="Search…" oninput="renderAgents()"/>
-      <select class="field" style="width:155px;margin:0" id="ag-sf" onchange="renderAgents()"><option value="all">All Stages</option></select>
-      <select class="field" style="width:150px;margin:0" id="ag-progress-f" onchange="renderAgents()"><option value="all">All Progress</option><option value="not_started">Not started (0%)</option><option value="in_progress">In progress</option><option value="done">Complete</option></select>
+      <select class="field" style="width:190px;margin:0" id="ag-pf" onchange="window._dashFilter=null;renderAgents()"><option value="all">All Programs</option></select>
+      <input class="field" style="width:170px;margin:0" id="ag-search" placeholder="Search…" oninput="window._dashFilter=null;renderAgents()"/>
+      <select class="field" style="width:155px;margin:0" id="ag-sf" onchange="window._dashFilter=null;renderAgents()"><option value="all">All Stages</option></select>
+      <select class="field" style="width:150px;margin:0" id="ag-progress-f" onchange="window._dashFilter=null;renderAgents()"><option value="all">All Progress</option><option value="not_started">Not started (0%)</option><option value="in_progress">In progress</option><option value="done">Complete</option></select>
       <button class="btn btn-dk btn-sm" onclick="openModal('m-add-agent')">+ Add Agent</button>
     </div>
     <div class="card" style="padding:0;overflow:hidden">
@@ -720,6 +720,8 @@ function renderDash(){
     <div class="pbar"><div class="pfill" style="width:${agents.length?Math.round(e.count/agents.length*100):0}%"></div></div></div>`).join(''):'<div class="empty">No programs yet — go to Templates to create one</div>';
 }
 
+function goAgentsDash(t){const agTab=document.querySelector('[data-p="agents"]');if(agTab)gp('agents',agTab);window._dashFilter=t==='all'?null:t;const pf=document.getElementById('ag-pf');if(pf)pf.value='all';const sf=document.getElementById('ag-sf');if(sf)sf.value='all';const pgf=document.getElementById('ag-progress-f');if(pgf)pgf.value='all';renderAgents();}
+
 function syncAll(){
   const po=programs.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
   const all='<option value="all">All Programs</option>';
@@ -738,7 +740,7 @@ function renderAgents(){
   const pf=document.getElementById('ag-pf')?.value||'all';
   const sf=document.getElementById('ag-sf')?.value||'all';
   const pgf=document.getElementById('ag-progress-f')?.value||'all';
-  const list=agents.filter(a=>(pf==='all'||a.prog===pf)&&(q?fn(a).toLowerCase().includes(q)||(a.email||'').toLowerCase().includes(q):true)&&(sf==='all'||stageLbl(a)===sf)&&(pgf==='all'||(pgf==='not_started'&&agPct(a)===0)||(pgf==='in_progress'&&agPct(a)>0&&agPct(a)<100)||(pgf==='done'&&agPct(a)===100)));
+  const list=agents.filter(a=>(pf==='all'||a.prog===pf)&&(q?fn(a).toLowerCase().includes(q)||(a.email||'').toLowerCase().includes(q):true)&&(sf==='all'||stageLbl(a)===sf)&&(pgf==='all'||(pgf==='not_started'&&agPct(a)===0)||(pgf==='in_progress'&&agPct(a)>0&&agPct(a)<100)||(pgf==='done'&&agPct(a)===100))).filter(a=>{const df=window._dashFilter;if(!df)return true;if(df==='active')return a.stage!=='s1';if(df==='pending')return a.stage==='s1';if(df==='tasks')return agPct(a)>0&&agPct(a)<100;return true;});
   document.getElementById('ag-tbody').innerHTML=list.length?list.map(a=>{
     const pct=agPct(a);
     return`<tr class="cr" onclick="openAgentDetail('${a.id}')">
@@ -762,11 +764,11 @@ function emailLinkPill(progId,emailId,agentName){
 
 function openAgentDetail(id){
   const a=agents.find(x=>x.id===id);if(!a)return;
-  const prog=programs.find(p=>p.id===a.prog);if(!prog)return;
+  const prog=programs.find(p=>p.id===a.prog)
   document.getElementById('ad-title').textContent=fn(a);
   const pct=agPct(a);
   let h=`<div class="g3" style="margin-bottom:14px">
-    <div class="card-sm"><div class="ts">Program</div><div style="font-size:12px;margin-top:2px;font-weight:600">${prog.name}</div></div>
+    <div class="card-sm"><div class="ts">Program</div><div style="font-size:12px;margin-top:2px;font-weight:600">${(prog&&prog.name||'No Program')}</div></div>
     <div class="card-sm"><div class="ts">Rate</div><div style="font-size:12px;margin-top:2px;font-weight:500">${a.tier}</div></div>
     <div class="card-sm"><div class="ts">VA</div><div style="font-size:12px;margin-top:2px;font-weight:500">${a.va}</div></div>
   </div>
@@ -779,9 +781,9 @@ function openAgentDetail(id){
   <div class="pbar" style="height:5px;margin-bottom:14px"><div class="pfill" style="width:${pct}%"></div></div>
   <div class="flex" style="margin-bottom:5px"><span class="ts" style="font-weight:600;color:var(--tx)">Current Stage</span></div>
   <div class="flex" style="margin-bottom:18px;gap:5px;flex-wrap:wrap">
-    ${prog.stages.map(s=>`<button class="btn btn-xs ${a.stage===s.id?'btn-dk':'btn-ol'}" onclick="setAgStage('${id}','${s.id}')">${s.label}</button>`).join('')}
+    ${(prog?prog.stages:[]).map(s=>`<button class="btn btn-xs ${a.stage===s.id?'btn-dk':'btn-ol'}" onclick="setAgStage('${id}','${s.id}')">${s.label}</button>`).join('')}
   </div>`;
-  prog.stages.forEach(s=>{
+  (prog?prog.stages:[]).forEach(s=>{
     const tasks=a.tasks[s.id]||[];const done=tasks.filter(t=>t.done).length;
     h+=`<div style="margin-bottom:16px">
       <div class="flex" style="margin-bottom:7px">
